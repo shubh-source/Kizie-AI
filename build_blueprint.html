@@ -159,6 +159,43 @@
       </div>
 
       <div style="height:40px"></div>
+      <div class="phase-row"><span class="phase-tag">Supporting Systems</span><div class="phase-line"></div></div>
+
+      <div class="node coral" data-id="step9" onclick="sel(this)">
+        <div class="node-label">Step 9 — Senses</div><div class="node-title">Emotion Detection Engine</div>
+        <div class="node-sub">MediaPipe FaceMesh · OpenSMILE · Micro-expressions</div>
+        <div class="node-icon">🫀</div>
+      </div>
+      <div class="connector"></div>
+
+      <div class="node purple" data-id="step10" onclick="sel(this)">
+        <div class="node-label">Step 10 — Security</div><div class="node-title">Privacy & Encryption Vault</div>
+        <div class="node-sub">AES-256 · Local-only · Zero Cloud · User-held keys</div>
+        <div class="node-icon">🔒</div>
+      </div>
+      <div class="connector"></div>
+
+      <div class="node pink" data-id="step11" onclick="sel(this)">
+        <div class="node-label">Step 11 — Customization</div><div class="node-title">Appearance & Identity Studio</div>
+        <div class="node-sub">User chooses look · gender · voice · style</div>
+        <div class="node-icon">🎨</div>
+      </div>
+      <div class="connector"></div>
+
+      <div class="node teal" data-id="step12" onclick="sel(this)">
+        <div class="node-label">Step 12 — Always Alive</div><div class="node-title">Persistent Living Presence</div>
+        <div class="node-sub">Idle behavior · Ambient awareness · Sleep/Wake cycle</div>
+        <div class="node-icon">👁️</div>
+      </div>
+      <div class="connector"></div>
+
+      <div class="node green" data-id="step13" onclick="sel(this)">
+        <div class="node-label">Step 13 — Movement</div><div class="node-title">Spatial Movement Engine</div>
+        <div class="node-sub">NavMesh · Walk · Sit · Follow user · Obstacle avoid</div>
+        <div class="node-icon">🚶</div>
+      </div>
+
+      <div style="height:40px"></div>
       <div class="scroll-hint">— click any block for exact execution details —</div>
     </div>
   </div>
@@ -315,6 +352,96 @@ const D = {
       {title:'Technical Challenge', points:[
         {t:'Multi-emitter sync mein <50ms delay hona chahiye, varna Kizie blink karti hui dikhegi jo illusion tod dega. Local mesh network iske liye sabse zaroori hai.'}
       ]}
+    ]
+  },
+  step9: {
+    color:'#ff6b6b', tag:'Step 9 — Execution', title:'Emotion Detection Engine',
+    role:'Kizie ka dil — bina puchhe user ka asli haal samajhna (chehra, awaaz, aur words se).',
+    sections:[
+      {title:'Exact Tools Needed', points:[
+        {t:'<strong>Face Reading:</strong> Google `MediaPipe FaceMesh` — 68-point face landmark tracking, micro-expressions, fake smile detection.'},
+        {t:'<strong>Voice Analysis:</strong> `OpenSMILE` — 6000+ acoustic features extract karta hai (pitch, tremor, speech rate).'},
+        {t:'<strong>Text Sentiment:</strong> Custom lexicon detector for Hindi/Hinglish negative patterns.'}
+      ]},
+      {title:'Kaise Banega (Execution Plan)', points:[
+        {t:'Python script jo webcam se continuously face track kare aur har 0.5 sec pe emotion score generate kare.'},
+        {t:'Audio stream se parallel voice tremor aur pitch analysis karna.'},
+        {t:'Teeno signals (face + voice + text) ko combine karke ek final emotion_state output dena (e.g., sad 0.87, lonely, exhausted).'},
+        {t:'Is output ko Brain (Step 2) aur Personality (Step 4) ko feed karna taki response adjust ho.'}
+      ]},
+      {title:'Estimated Cost', code:'MediaPipe: Free\\nOpenSMILE: Free\\nTotal Time: 2 Weeks'}
+    ]
+  },
+  step10: {
+    color:'#7c5cfc', tag:'Step 10 — Execution', title:'Privacy & Encryption Vault',
+    role:'User ka data sirf user ke paas rahe. Koi company, koi server, koi access nahi.',
+    sections:[
+      {title:'Exact Tools Needed', points:[
+        {t:'<strong>Encryption:</strong> `AES-256` encryption at rest — har file encrypted.'},
+        {t:'<strong>Key Management:</strong> User-held decryption key (Kizie company ke paas bhi nahi).'},
+        {t:'<strong>Backup:</strong> Encrypted offline backup (USB/NAS) — multi-location redundancy.'}
+      ]},
+      {title:'Kaise Banega (Execution Plan)', points:[
+        {t:'Database (Step 1) ke upar encryption layer lagana — data write hote waqt encrypt, read hote waqt decrypt.'},
+        {t:'User ko ek master key dena jo sirf uske paas hogi. Agar key kho jaye toh data permanently locked.'},
+        {t:'Automatic encrypted backup script banana jo weekly USB/NAS pe copy kare.'},
+        {t:'Zero-knowledge architecture — even agar koi device chura le, bina key ke data unreadable hai.'}
+      ]},
+      {title:'Estimated Cost', code:'AES-256 Libraries: Free (Python cryptography)\\nBackup Hardware: ₹2k-5k (USB/NAS)\\nTotal Time: 1 Week'}
+    ]
+  },
+  step11: {
+    color:'#ff6eb4', tag:'Step 11 — Execution', title:'Appearance & Identity Studio',
+    role:'User apni Kizie ka look, gender, voice, style sab customize kar sake.',
+    sections:[
+      {title:'Exact Tools Needed', points:[
+        {t:'<strong>3D Customization:</strong> `Ready Player Me` ya custom Unity character creator.'},
+        {t:'<strong>Voice Selection:</strong> Multiple TTS voice profiles (male/female/neutral).'},
+        {t:'<strong>UI:</strong> In-app settings panel with live preview.'}
+      ]},
+      {title:'Kaise Banega (Execution Plan)', points:[
+        {t:'Unity mein character customization screen banana — hair, skin, outfit, height sliders.'},
+        {t:'Multiple voice packs integrate karna taki user apni pasand ki awaaz choose kare.'},
+        {t:'Chosen avatar ko save karke across all devices sync karna (same look phone aur hologram pe).'}
+      ]},
+      {title:'Estimated Cost', code:'Ready Player Me: Free tier available\\nVoice Packs: ₹0-5k (one-time)\\nTotal Time: 2 Weeks'}
+    ]
+  },
+  step12: {
+    color:'#00d4aa', tag:'Step 12 — Execution', title:'Persistent Living Presence',
+    role:'Kizie 24/7 ghar mein exist karti hai — soti hai, uthti hai, idle mein bhi zinda lagti hai.',
+    sections:[
+      {title:'Exact Tools Needed', points:[
+        {t:'<strong>Animation System:</strong> 100+ idle animation loops (breathing, blinking, stretching, looking around).'},
+        {t:'<strong>State Machine:</strong> Unity Animator with context-aware transitions.'},
+        {t:'<strong>Sensors:</strong> Ambient light sensor + motion detector for room awareness.'}
+      ]},
+      {title:'Kaise Banega (Execution Plan)', points:[
+        {t:'Unity mein ek state machine banana: Active → Idle → Rest → Sleep modes.'},
+        {t:'Time-of-day awareness — subah energetic, raat ko quiet, sone ke waqt lights dim.'},
+        {t:'Room mein koi aaye toh Kizie notice kare (motion sensor se) aur naturally react kare.'},
+        {t:'Jab user baat na kar raha ho — Kizie randomly chhoti movements kare (blink, look around, shift weight).'}
+      ]},
+      {title:'Estimated Cost', code:'Animation Assets: ₹5k-10k (one-time)\\nSensors: ₹2k-5k\\nTotal Time: 3-4 Weeks'}
+    ]
+  },
+  step13: {
+    color:'#4ade80', tag:'Step 13 — Execution', title:'Spatial Movement Engine',
+    role:'Kizie room mein walk kare, furniture se bachke nikle, user ke saath move kare — exactly insaan jaisi.',
+    sections:[
+      {title:'Exact Tools Needed', points:[
+        {t:'<strong>Room Mapping:</strong> `LiDAR` sensors + `mmWave Radar` for full 3D home mesh.'},
+        {t:'<strong>Pathfinding:</strong> Unity `NavMesh` (same tech jo video game NPCs use karte hain).'},
+        {t:'<strong>Animation:</strong> Motion-captured human walk cycles + `Inverse Kinematics` (IK) for natural body.'}
+      ]},
+      {title:'Kaise Banega (Execution Plan)', points:[
+        {t:'LiDAR se ghar ka complete 3D scan banana — har wall, door, furniture mapped.'},
+        {t:'Unity NavMesh bake karke walkable areas define karna.'},
+        {t:'Walk animation + IK rig setup taki stairs pe foot placement aur chair pe natural sit ho.'},
+        {t:'User follow mode banana — Kizie user ke peeche comfortable distance pe chale.'},
+        {t:'Emitter handoff — ek room se doosre mein <50ms transition bina flicker ke.'}
+      ]},
+      {title:'Estimated Cost', code:'LiDAR Sensors: ₹10k-30k\\nNavMesh + IK: Free (Unity built-in)\\nMotion Capture Data: ₹5k-15k\\nTotal Time: 1-2 Months'}
     ]
   }
 };
