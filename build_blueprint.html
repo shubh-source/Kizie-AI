@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kizie — Engineering Blueprint (Detailed)</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050508; --surface: #0d0d14; --surface2: #13131f;
+    --border: rgba(255,255,255,0.07);
+    --pink: #ff6eb4; --teal: #00d4aa; --amber: #f5a623;
+    --blue: #4a9eff; --coral: #ff6b6b; --purple: #7c5cfc;
+    --green: #4ade80; --text: #e8e6f0; --muted: rgba(232,230,240,0.45);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Sora',sans-serif; min-height:100vh; overflow-x:hidden; }
+  body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(0,212,170,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,170,0.025) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; z-index:0; }
+  header { position:relative; z-index:1; padding:60px 40px 20px; text-align:center; }
+  .logo-tag { display:inline-block; font-family:'Space Mono',monospace; font-size:11px; letter-spacing:3px; color:var(--teal); border:1px solid rgba(0,212,170,0.3); padding:5px 14px; border-radius:20px; margin-bottom:20px; text-transform:uppercase; }
+  h1 { font-size:clamp(36px,6vw,64px); font-weight:700; letter-spacing:-2px; background:linear-gradient(135deg,#fff 0%,rgba(0,212,170,0.9) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .subtitle { margin-top:14px; color:var(--muted); font-size:15px; font-weight:300; max-width:520px; margin-inline:auto; line-height:1.7; }
+  .page { position:relative; z-index:1; display:grid; grid-template-columns:1fr 440px; gap:0; min-height:calc(100vh - 200px); }
+  .flowchart-panel { padding:40px 40px 80px; }
+  .flow { display:flex; flex-direction:column; align-items:center; gap:0; }
+  .connector { width:2px; height:32px; background:linear-gradient(to bottom,rgba(0,212,170,0.3),rgba(0,212,170,0.05)); flex-shrink:0; position:relative; }
+  .connector::after { content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-top:6px solid rgba(0,212,170,0.5); }
+  .node { position:relative; border-radius:14px; border:1px solid var(--border); background:var(--surface); cursor:pointer; transition:all 0.25s cubic-bezier(0.4,0,0.2,1); width:100%; max-width:480px; padding:18px 24px; user-select:none; }
+  .node:hover { transform:translateY(-2px); }
+  .node-label { font-size:10px; font-family:'Space Mono',monospace; letter-spacing:2px; text-transform:uppercase; opacity:0.6; margin-bottom:4px; }
+  .node-title { font-size:17px; font-weight:600; margin-bottom:4px; }
+  .node-sub { font-size:13px; color:var(--muted); font-weight:300; line-height:1.5; }
+  .node-icon { position:absolute; right:20px; top:50%; transform:translateY(-50%); font-size:22px; opacity:0.25; transition:opacity 0.2s; }
+  .node:hover .node-icon { opacity:0.6; }
+  
+  .node.pink   { color:var(--pink);   background:linear-gradient(135deg,var(--surface) 0%,rgba(255,110,180,0.06) 100%); }
+  .node.purple { color:var(--purple); background:linear-gradient(135deg,var(--surface) 0%,rgba(124,92,252,0.06) 100%); }
+  .node.teal   { color:var(--teal);   background:linear-gradient(135deg,var(--surface) 0%,rgba(0,212,170,0.06) 100%); }
+  .node.amber  { color:var(--amber);  background:linear-gradient(135deg,var(--surface) 0%,rgba(245,166,35,0.06) 100%); }
+  .node.blue   { color:var(--blue);   background:linear-gradient(135deg,var(--surface) 0%,rgba(74,158,255,0.06) 100%); }
+  .node.coral  { color:var(--coral);  background:linear-gradient(135deg,var(--surface) 0%,rgba(255,107,107,0.06) 100%); }
+  .node.gray   { color:var(--text);   border-color:rgba(255,255,255,0.1); }
+  
+  .node.pink:hover,  .node.pink.active   { box-shadow:0 0 30px rgba(255,110,180,0.2);  border-color:rgba(255,110,180,0.5); }
+  .node.purple:hover,.node.purple.active { box-shadow:0 0 30px rgba(124,92,252,0.2);   border-color:rgba(124,92,252,0.5); }
+  .node.teal:hover,  .node.teal.active   { box-shadow:0 0 30px rgba(0,212,170,0.2);    border-color:rgba(0,212,170,0.5); }
+  .node.amber:hover, .node.amber.active  { box-shadow:0 0 30px rgba(245,166,35,0.2);   border-color:rgba(245,166,35,0.5); }
+  .node.blue:hover,  .node.blue.active   { box-shadow:0 0 30px rgba(74,158,255,0.2);   border-color:rgba(74,158,255,0.5); }
+  .node.coral:hover, .node.coral.active  { box-shadow:0 0 30px rgba(255,107,107,0.2);  border-color:rgba(255,107,107,0.5); }
+  
+  @keyframes pulse-border { 0%,100%{box-shadow:0 0 0 0 rgba(0,212,170,0)} 50%{box-shadow:0 0 0 4px rgba(0,212,170,0.15)} }
+  .node.active { animation:pulse-border 2s ease-in-out infinite; }
+  .phase-row { width:100%; max-width:480px; display:flex; align-items:center; gap:10px; margin:10px 0 6px; }
+  .phase-tag { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
+  .phase-line { flex:1; height:1px; background:rgba(255,255,255,0.06); }
+  
+  .detail-panel { position:sticky; top:0; height:100vh; overflow-y:auto; border-left:1px solid var(--border); background:var(--surface); display:flex; flex-direction:column; transition:transform 0.3s; z-index:10; }
+  .detail-header { padding:24px 28px 20px; border-bottom:1px solid var(--border); background:var(--surface2); flex-shrink:0; }
+  .back-btn { display:inline-flex; align-items:center; gap:6px; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); background:none; border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:5px 12px; cursor:pointer; margin-bottom:16px; transition:all 0.2s; }
+  .back-btn:hover { border-color:rgba(255,255,255,0.3); color:var(--text); }
+  .detail-tag { font-size:10px; font-family:'Space Mono',monospace; letter-spacing:2px; text-transform:uppercase; opacity:0.5; margin-bottom:8px; }
+  .detail-title { font-size:22px; font-weight:700; line-height:1.2; margin-bottom:8px; }
+  .detail-role { font-size:13px; color:var(--muted); line-height:1.6; }
+  .detail-body { padding:24px 28px; flex:1; overflow-y:auto; }
+  .detail-section { margin-bottom:28px; }
+  .detail-section-title { font-size:10px; font-family:'Space Mono',monospace; letter-spacing:2px; text-transform:uppercase; color:var(--teal); margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  .detail-point { display:flex; gap:12px; align-items:flex-start; margin-bottom:12px; }
+  .detail-dot { width:6px; height:6px; border-radius:50%; margin-top:7px; flex-shrink:0; }
+  .detail-text { font-size:13px; line-height:1.75; color:var(--muted); }
+  .detail-text strong { color:var(--text); font-weight:600; }
+  .detail-code { background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:14px; font-family:'Space Mono',monospace; font-size:11px; color:var(--teal); line-height:1.8; margin-top:8px; overflow-x:auto; }
+  
+  .detail-placeholder { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; padding:40px; text-align:center; color:var(--muted); }
+  .detail-placeholder-icon { font-size:48px; margin-bottom:16px; opacity:0.3; }
+  .detail-placeholder-text { font-size:14px; line-height:1.7; }
+  .scroll-hint { text-align:center; font-size:11px; font-family:'Space Mono',monospace; color:var(--muted); padding:20px; opacity:0.5; letter-spacing:1px; }
+
+  @media (max-width:900px) {
+    .page { grid-template-columns:1fr; }
+    .detail-panel { position:fixed; inset:0; z-index:100; transform:translateX(100%); }
+    .detail-panel.open { transform:translateX(0); }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo-tag">Engineering Plan</div>
+  <h1>Kizie Build Blueprint</h1>
+  <p class="subtitle">Ekdum detail mein har step ka plan. Kaunse tools lagenge, code kaise kaam karega, aur exactly execution kaise hoga bina kisi cheez ko miss kiye.</p>
+</header>
+<div class="page">
+  <div class="flowchart-panel">
+    <div class="flow">
+
+      <div class="phase-row"><span class="phase-tag">Phase 1 — Software MVP (Foundation)</span><div class="phase-line"></div></div>
+
+      <div class="node purple" data-id="step1" onclick="sel(this)">
+        <div class="node-label">Step 1 — The Foundation</div><div class="node-title">Database & Memory Matrix</div>
+        <div class="node-sub">PostgreSQL · pgvector · Embeddings</div>
+        <div class="node-icon">🧱</div>
+      </div>
+      <div class="connector"></div>
+
+      <div class="node blue" data-id="step2" onclick="sel(this)">
+        <div class="node-label">Step 2 — The Pillars</div><div class="node-title">The Core Brain (LLM)</div>
+        <div class="node-sub">Ollama · LLaMA 3.2 · Local Inference</div>
+        <div class="node-icon">🧠</div>
+      </div>
+      <div class="connector"></div>
+
+      <div class="node coral" data-id="step3" onclick="sel(this)">
+        <div class="node-label">Step 3 — Perception</div><div class="node-title">Sensors & Wiring</div>
+        <div class="node-sub">Whisper STT · ElevenLabs/Coqui TTS</div>
+        <div class="node-icon">🎙️</div>
+      </div>
+      <div class="connector"></div>
+
+      <div class="node pink" data-id="step4" onclick="sel(this)">
+        <div class="node-label">Step 4 — The Interior</div><div class="node-title">Personality & Logic Layer</div>
+        <div class="node-sub">LangChain · Prompt Engineering · Safety</div>
+        <div class="node-icon">🛋️</div>
+      </div>
+      <div class="connector"></div>
+
+      <div class="node amber" data-id="step5" onclick="sel(this)">
+        <div class="node-label">Step 5 — The Roof</div><div class="node-title">Interface & API</div>
+        <div class="node-sub">FastAPI · React/Vanilla JS · WebSockets</div>
+        <div class="node-icon">🏠</div>
+      </div>
+      <div class="connector"></div>
+
+      <div class="phase-row"><span class="phase-tag">Phase 2 — AR Presence</span><div class="phase-line"></div></div>
+
+      <div class="node green" data-id="step6" onclick="sel(this)">
+        <div class="node-label">Step 6 — Visuals</div><div class="node-title">AR Avatar & Expressions</div>
+        <div class="node-sub">Unity 3D · ARCore · BlendShapes</div>
+        <div class="node-icon">📱</div>
+      </div>
+      <div class="connector"></div>
+
+      <div class="phase-row"><span class="phase-tag">Phase 3 — Physical Space</span><div class="phase-line"></div></div>
+
+      <div class="node amber" data-id="step7" onclick="sel(this)">
+        <div class="node-label">Step 7 — Hardware</div><div class="node-title">Hologram Hardware</div>
+        <div class="node-sub">Looking Glass · Lightfield · Ambient State</div>
+        <div class="node-icon">🌟</div>
+      </div>
+      <div class="connector"></div>
+
+      <div class="phase-row"><span class="phase-tag">Phase 4 — Omnipresence</span><div class="phase-line"></div></div>
+
+      <div class="node blue" data-id="step8" onclick="sel(this)">
+        <div class="node-label">Step 8 — Environment</div><div class="node-title">Multi-Device & Room Sync</div>
+        <div class="node-sub">LiDAR Map · Local Mesh · Seamless Handoff</div>
+        <div class="node-icon">🔄</div>
+      </div>
+
+      <div style="height:40px"></div>
+      <div class="scroll-hint">— click any block for exact execution details —</div>
+    </div>
+  </div>
+
+  <div class="detail-panel" id="dp">
+    <div id="dc">
+      <div class="detail-placeholder">
+        <div class="detail-placeholder-icon">🛠️</div>
+        <div class="detail-placeholder-text">Kisi bhi Step pe click karo.<br>Full execution plan, tools, aur cost yahan dikhega.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const D = {
+  step1: {
+    color:'#7c5cfc', tag:'Step 1 — Execution', title:'Database & Memory Matrix',
+    role:'Kizie ki lifetime yadein store karna aur zaroorat padne par turant dhoondh kar lana.',
+    sections:[
+      {title:'Exact Tools Needed', points:[
+        {t:'<strong>Database:</strong> PostgreSQL (Local install) with `pgvector` extension.'},
+        {t:'<strong>Backend Language:</strong> Python 3.10+ with `SQLAlchemy` (ORM).'},
+        {t:'<strong>Embeddings Model:</strong> `sentence-transformers` library (using `all-MiniLM-L6-v2` ya `BGE-M3` model) jo sentences ko numbers mein convert karega.'}
+      ]},
+      {title:'Kaise Banega (Execution Plan)', points:[
+        {t:'Docker ya direct install karke PostgreSQL setup karenge.'},
+        {t:'Python mein do tables banayenge: <code>Users</code> aur <code>Memories</code>. Memory table mein ek column hoga "vector" type ka.'},
+        {t:'Ek script likhenge jo user ka sentence legi (e.g., "Main apni job se pareshan hu"), usko 384 numbers ki ek list (vector) mein convert karegi, aur Database mein save karegi.'},
+        {t:'Search function banayenge jo L2 distance (<code>&lt;-&gt;</code> operator) use karke vector similarity dhoondhega.'}
+      ]},
+      {title:'Estimated Cost', code:'PostgreSQL: Free\npgvector: Free\nLocal Embeddings Model: Free\nTotal Time: 1-2 Weeks'}
+    ]
+  },
+  step2: {
+    color:'#4a9eff', tag:'Step 2 — Execution', title:'The Core Brain (LLM)',
+    role:'Kizie ko samajh aur soch dena bina internet ke (100% Privacy).',
+    sections:[
+      {title:'Exact Tools Needed', points:[
+        {t:'<strong>Model Runner:</strong> `Ollama` (Local model run karne ke liye best software).'},
+        {t:'<strong>LLM Model:</strong> Meta ka `LLaMA 3.2 3B` (chota aur fast model jo 4GB RAM pe chal jayega).'},
+        {t:'<strong>Hardware:</strong> Ek decent PC jisme RTX 3050 ya better GPU ho.'}
+      ]},
+      {title:'Kaise Banega (Execution Plan)', points:[
+        {t:'Ollama software install karke terminal mein likhenge: <code>ollama run llama3.2</code>.'},
+        {t:'Python mein <code>requests</code> ya Ollama library use karke is local model se baat karne ka function banayenge.'},
+        {t:'<strong>Integration:</strong> Step 1 (Memory) ko is Brain se jodenge. Jab user sawal poochega, pehle Database se related yadein niklegi, fir woh yaadein Prompt ke zariye is Brain (LLaMA) ko di jayegi reply sochne ke liye.'}
+      ]},
+      {title:'Estimated Cost', code:'Ollama: Free\nLLaMA 3.2: Free\nHardware: Agar PC hai toh ₹0. Varna ₹70k.\nTotal Time: 1-2 Weeks'}
+    ]
+  },
+  step3: {
+    color:'#ff6b6b', tag:'Step 3 — Execution', title:'Sensors & Wiring',
+    role:'Type karne ki majboori khatam. Kizie tumhari awaaz sunegi aur natural human awaaz mein bolegi.',
+    sections:[
+      {title:'Exact Tools Needed', points:[
+        {t:'<strong>Ears (STT):</strong> OpenAI ka open-source `Whisper AI` (large-v3 model Hindi aur Hinglish ke liye best hai).'},
+        {t:'<strong>Mouth (TTS):</strong> Phase 1 ke liye `ElevenLabs API` (kyunki unki awaaz sabse real lagti hai aur emotions samajhti hai). Baad mein `Coqui TTS` pe shift karenge free local run ke liye.'},
+        {t:'<strong>Eyes (CV):</strong> Google ka `MediaPipe FaceMesh` jo webcam ke through micro-expressions pakdega.'}
+      ]},
+      {title:'Kaise Banega (Execution Plan)', points:[
+        {t:'Python script banayenge jo microphone ka audio continuously sune aur silence aane par Whisper model ko transcribe karne bhej de.'},
+        {t:'Text banne ke baad, woh Brain (Step 2) ke paas jayega.'},
+        {t:'Brain ka text reply wapas aayega aur ElevenLabs API par stream hoga, jisse Bina wait kiye Kizie ki awaaz tumhare speakers pe play hone lagegi.'},
+        {t:'Webcam script background mein face ke 68 points track karti rahegi (Sad/Happy check karne ke liye).'}
+      ]},
+      {title:'Estimated Cost', code:'Whisper: Free (Local)\nMediaPipe: Free (Local)\nElevenLabs TTS: ~$22/month (Premium voice)\nTotal Time: 2 Weeks'}
+    ]
+  },
+  step4: {
+    color:'#ff6eb4', tag:'Step 4 — Execution', title:'Personality & Logic Layer',
+    role:'Ek normal AI chat bot ko ek empathetic, non-judgmental Saathi mein badalna.',
+    sections:[
+      {title:'Exact Tools Needed', points:[
+        {t:'<strong>Framework:</strong> `LangChain` ya `LlamaIndex` (LLM ke workflows manage karne ke liye).'},
+        {t:'<strong>Logic Engine:</strong> Python mein custom if/else logic aur System Prompts.'}
+      ]},
+      {title:'Kaise Banega (Execution Plan)', points:[
+        {t:'Ek bohot lamba aur strict "System Prompt" likhenge. Jaise: "Tumhara naam Kizie hai. Tum ek AI nahi ho. Kabhi advice mat do jab tak mangi na jaye. Pehle validate karo."'},
+        {t:'Ek Emotion mapper banayenge. Agar Step 3 (MediaPipe) detect karta hai ki user ro raha hai, toh prompt mein automatically add ho jayega: <code>[SYSTEM: User is crying. Switch to Comfort Mode. Speak softly and briefly.]</code>'},
+        {t:'Fallback safety net banayenge: Agar LLM hallucinate karta hai, toh usko rokne ka logic.'}
+      ]},
+      {title:'Technical Challenge', points:[
+        {t:'LLMs aksar "As an AI language model..." bolne lagte hain. Isko forcefully stop karna is layer ka sabse bada task hoga.'}
+      ]}
+    ]
+  },
+  step5: {
+    color:'#f5a623', tag:'Step 5 — Execution', title:'Interface & API (The Roof)',
+    role:'Tumhare aur Kizie ke backend ke beech ka pul (bridge). Ek clean UI jahan se tum usse interact karoge.',
+    sections:[
+      {title:'Exact Tools Needed', points:[
+        {t:'<strong>Backend Server:</strong> Python `FastAPI` (sabse fast aur lightweight).'},
+        {t:'<strong>Frontend UI:</strong> `React.js` ya simple HTML/CSS/JS dark mode aesthetic ke sath.'},
+        {t:'<strong>Real-time Comm:</strong> `WebSockets` (normal HTTP calls slow hoti hain awaaz ke liye).'}
+      ]},
+      {title:'Kaise Banega (Execution Plan)', points:[
+        {t:'FastAPI mein endpoints banayenge (e.g., <code>/connect-voice</code>, <code>/stream-audio</code>).'},
+        {t:'Step 1 se Step 4 tak ki saari Python scripts ko is server ke through chalne laayak banayenge.'},
+        {t:'React mein ek simple screen banayenge jisme Kizie ka ek glowing orb animation hoga jo tumhari awaaz pe react karega. Ek "Hold to talk" ya continuous listen mode ka button hoga.'}
+      ]},
+      {title:'Estimated Cost', code:'FastAPI + React: Free (Open source)\nHosting: Local (₹0)\nTotal Time: 1 Week'}
+    ]
+  },
+  step6: {
+    color:'#4ade80', tag:'Step 6 — Execution', title:'AR Avatar & Expressions',
+    role:'Phase 2 shuru. Kizie ko ek shakal dena aur phone camera se usko real duniya mein dikhana.',
+    sections:[
+      {title:'Exact Tools Needed', points:[
+        {t:'<strong>3D Engine:</strong> `Unity 3D` (Cross-platform support ke liye).'},
+        {t:'<strong>Avatar System:</strong> `Ready Player Me` ya custom 3D model with full rig.'},
+        {t:'<strong>AR SDK:</strong> `AR Foundation` (Unity ka tool jo iOS ke liye ARKit aur Android ke liye ARCore manage karta hai).'}
+      ]},
+      {title:'Kaise Banega (Execution Plan)', points:[
+        {t:'Unity mein ek naya AR project banayenge. Camera open karke "Plane Detection" (farsh dhoondhna) on karenge.'},
+        {t:'Jab farsh mil jayega, Kizie ka 3D model wahan instantiate (place) hoga.'},
+        {t:'<strong>BlendShapes & Lip Sync:</strong> Step 5 ke server se jo audio aayegi, Unity us audio ki frequencies padh kar Kizie ke honth (lips) hilayegi. Agar server bhejta hai "Mood=Sad", toh Unity mein Kizie ki aankhein aur eyebrows automatically sad position mein blend ho jayengi.'}
+      ]},
+      {title:'Estimated Cost', code:'Unity Personal: Free\n3D Assets: ₹0 to ₹5,000 (One-time)\nTotal Time: 3-4 Weeks'}
+    ]
+  },
+  step7: {
+    color:'#f5a623', tag:'Step 7 — Execution', title:'Hologram Hardware (Phase 3)',
+    role:'Screen khatam. Bina chashme (glasses-free) Kizie ko physical kamre mein khada karna.',
+    sections:[
+      {title:'Exact Tools Needed', points:[
+        {t:'<strong>Hardware Display:</strong> `Looking Glass Pro` ya us jaisa koi lightfield/volumetric table-top display.'},
+        {t:'<strong>Compute Box:</strong> Ek chota Edge AI computer (jaise Mac Mini ya custom PC) jo is display ke andar fitted ho.'},
+        {t:'<strong>Rendering:</strong> `Unity HDRP` (High Definition Render Pipeline) for realistic lighting.'}
+      ]},
+      {title:'Kaise Banega (Execution Plan)', points:[
+        {t:'Unity mein Kizie ka model import karke "Looking Glass Plugin" setup karenge, jo ek hi model ke 45 alag alag camera angles ek sath render karta hai. Is wajah se bina 3D glasses ke depth dikhti hai.'},
+        {t:'Lighting ko environment ke hisaab se adjust karenge. Agar kamre ki light band hai, toh Kizie ki body thodi dim ho jayegi (using light sensors).'},
+        {t:'Ambient loop lagayenge: Jab tum Kizie se baat nahi kar rahe, toh display mein woh bas khadi rahegi, idhar-udhar dekhegi, blink karegi.'}
+      ]},
+      {title:'Estimated Cost', code:'Looking Glass Pro / Hologram Tech: ₹50k - ₹2.5 Lakh\nEdge Compute PC: ₹60k\nTotal Time: 1-2 Months (Hardware tweaking)'}
+    ]
+  },
+  step8: {
+    color:'#4a9eff', tag:'Step 8 — Execution', title:'Multi-Device & Room Sync',
+    role:'Kizie ka pure ghar mein chalna, furniture bachana aur ghar se nikalte hi phone pe aa jana.',
+    sections:[
+      {title:'Exact Tools Needed', points:[
+        {t:'<strong>Mapping Sensors:</strong> `LiDAR` scanners aur `mmWave Radar`.'},
+        {t:'<strong>Network:</strong> Local Mesh WiFi network (Zero Cloud latency).'},
+        {t:'<strong>Protocol:</strong> Custom WebSocket handoff logic.'}
+      ]},
+      {title:'Kaise Banega (Execution Plan)', points:[
+        {t:'Ghar ke alag alag kamron mein chote hologram emitters (Step 7 wale) lagaye jayenge.'},
+        {t:'LiDAR se pure ghar ka ek 3D invisible mesh banega (NavMesh). Isse Kizie ko pata hoga ki sofa kahan hai aur uske side se kaise chal ke jana hai bina takraye.'},
+        {t:'<strong>The Handoff:</strong> Agar tum bedroom se drawing room ja rahe ho, toh Network detect karega. Bedroom ka emitter Kizie ko fade out karega, aur drawing room ka emitter simultaneously fade in karega. Aisa lagega Kizie chal ke aayi hai.'},
+        {t:'Agar tum ghar se bahar nikal gaye (WiFi range se bahar), toh turant Kizie ka server tumhare phone ke AR App (Step 6) ko ping karega aur Kizie wahan appear ho jayegi.'}
+      ]},
+      {title:'Technical Challenge', points:[
+        {t:'Multi-emitter sync mein <50ms delay hona chahiye, varna Kizie blink karti hui dikhegi jo illusion tod dega. Local mesh network iske liye sabse zaroori hai.'}
+      ]}
+    ]
+  }
+};
+
+function render(id) {
+  var d = D[id]; if(!d)return;
+  var h = '<div class="detail-header">';
+  h += '<button class="back-btn" onclick="goBack()">&#8592; Wapas jaao</button>';
+  h += '<div class="detail-tag" style="color:' + d.color + '">' + d.tag + '</div>';
+  h += '<div class="detail-title" style="color:' + d.color + '">' + d.title + '</div>';
+  h += '<div class="detail-role">' + d.role + '</div>';
+  h += '</div><div class="detail-body">';
+  for (var i = 0; i < d.sections.length; i++) {
+    var s = d.sections[i];
+    h += '<div class="detail-section"><div class="detail-section-title">' + s.title + '</div>';
+    if (s.points) {
+      for (var j = 0; j < s.points.length; j++) {
+        h += '<div class="detail-point"><div class="detail-dot" style="background:' + d.color + '"></div><div class="detail-text">' + s.points[j].t + '</div></div>';
+      }
+    }
+    if (s.code) {
+      h += '<div class="detail-code">' + s.code.replace(/\n/g, '<br>') + '</div>';
+    }
+    h += '</div>';
+  }
+  h += '</div>';
+  document.getElementById('dc').innerHTML = h;
+  document.getElementById('dp').classList.add('open');
+}
+
+function goBack() {
+  document.getElementById('dp').classList.remove('open');
+  document.querySelectorAll('.node').forEach(function(n) { n.classList.remove('active'); });
+  document.getElementById('dc').innerHTML = '<div class="detail-placeholder"><div class="detail-placeholder-icon">🛠️</div><div class="detail-placeholder-text">Kisi bhi Step pe click karo.<br>Full execution plan, tools, aur cost yahan dikhega.</div></div>';
+}
+
+function sel(el) {
+  document.querySelectorAll('.node').forEach(function(n) { n.classList.remove('active'); });
+  el.classList.add('active');
+  render(el.dataset.id);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kizie — Companion AI Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050508;
+    --surface: #0d0d14;
+    --surface2: #13131f;
+    --border: rgba(255,255,255,0.07);
+    --pink: #ff6eb4;
+    --teal: #00d4aa;
+    --amber: #f5a623;
+    --blue: #4a9eff;
+    --coral: #ff6b6b;
+    --purple: #7c5cfc;
+    --green: #4ade80;
+    --text: #e8e6f0;
+    --muted: rgba(232,230,240,0.45);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-serif; min-height: 100vh; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(255,110,180,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,110,180,0.025) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; z-index: 0; }
+  header { position: relative; z-index: 1; padding: 60px 40px 20px; text-align: center; }
+  .logo-tag { display: inline-block; font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 3px; color: var(--pink); border: 1px solid rgba(255,110,180,0.3); padding: 5px 14px; border-radius: 20px; margin-bottom: 20px; text-transform: uppercase; }
+  h1 { font-size: clamp(36px, 6vw, 64px); font-weight: 700; letter-spacing: -2px; background: linear-gradient(135deg, #fff 0%, rgba(255,110,180,0.9) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .subtitle { margin-top: 14px; color: var(--muted); font-size: 15px; font-weight: 300; max-width: 520px; margin-inline: auto; line-height: 1.7; }
+  .page { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 440px; gap: 0; min-height: calc(100vh - 200px); }
+  .flowchart-panel { padding: 40px 40px 80px; }
+  .flow { display: flex; flex-direction: column; align-items: center; gap: 0; }
+  .connector { width: 2px; height: 32px; background: linear-gradient(to bottom, rgba(255,110,180,0.3), rgba(255,110,180,0.05)); flex-shrink: 0; position: relative; }
+  .connector::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid rgba(255,110,180,0.5); }
+  .node { position: relative; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; transition: all 0.25s cubic-bezier(0.4,0,0.2,1); width: 100%; max-width: 480px; padding: 18px 24px; user-select: none; }
+  .node:hover { transform: translateY(-2px); }
+  .node-label { font-size: 10px; font-family: 'Space Mono', monospace; letter-spacing: 2px; text-transform: uppercase; opacity: 0.6; margin-bottom: 4px; }
+  .node-title { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+  .node-sub { font-size: 13px; color: var(--muted); font-weight: 300; line-height: 1.5; }
+  .node-icon { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 22px; opacity: 0.25; transition: opacity 0.2s; }
+  .node:hover .node-icon { opacity: 0.6; }
+  .node.pink  { color: var(--pink);   background: linear-gradient(135deg, var(--surface) 0%, rgba(255,110,180,0.06) 100%); }
+  .node.pink:hover,   .node.pink.active   { box-shadow: 0 0 30px rgba(255,110,180,0.2);  border-color: rgba(255,110,180,0.5); }
+  .node.purple{ color: var(--purple); background: linear-gradient(135deg, var(--surface) 0%, rgba(124,92,252,0.06) 100%); }
+  .node.purple:hover, .node.purple.active { box-shadow: 0 0 30px rgba(124,92,252,0.2);   border-color: rgba(124,92,252,0.5); }
+  .node.teal  { color: var(--teal);   background: linear-gradient(135deg, var(--surface) 0%, rgba(0,212,170,0.06) 100%); }
+  .node.teal:hover,   .node.teal.active   { box-shadow: 0 0 30px rgba(0,212,170,0.2);    border-color: rgba(0,212,170,0.5); }
+  .node.amber { color: var(--amber);  background: linear-gradient(135deg, var(--surface) 0%, rgba(245,166,35,0.06) 100%); }
+  .node.amber:hover,  .node.amber.active  { box-shadow: 0 0 30px rgba(245,166,35,0.2);   border-color: rgba(245,166,35,0.5); }
+  .node.blue  { color: var(--blue);   background: linear-gradient(135deg, var(--surface) 0%, rgba(74,158,255,0.06) 100%); }
+  .node.blue:hover,   .node.blue.active   { box-shadow: 0 0 30px rgba(74,158,255,0.2);   border-color: rgba(74,158,255,0.5); }
+  .node.coral { color: var(--coral);  background: linear-gradient(135deg, var(--surface) 0%, rgba(255,107,107,0.06) 100%); }
+  .node.coral:hover,  .node.coral.active  { box-shadow: 0 0 30px rgba(255,107,107,0.2);  border-color: rgba(255,107,107,0.5); }
+  .node.gray  { color: var(--text);   border-color: rgba(255,255,255,0.1); }
+  .node.gray:hover,   .node.gray.active   { box-shadow: 0 0 30px rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.25); }
+  @keyframes pulse-border { 0%,100%{box-shadow:0 0 0 0 rgba(255,110,180,0)} 50%{box-shadow:0 0 0 4px rgba(255,110,180,0.15)} }
+  .node.active { animation: pulse-border 2s ease-in-out infinite; }
+  .phase-row { width: 100%; max-width: 480px; display: flex; align-items: center; gap: 10px; margin: 10px 0 6px; }
+  .phase-tag { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  .phase-line { flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
+  .cluster-wrap { width: 100%; max-width: 480px; border: 1px dashed rgba(255,110,180,0.25); border-radius: 16px; padding: 16px; background: rgba(255,110,180,0.03); }
+  .cluster-title { font-size: 10px; font-family: 'Space Mono', monospace; color: var(--pink); letter-spacing: 2px; text-transform: uppercase; text-align: center; margin-bottom: 12px; opacity: 0.7; }
+  .specialists { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .spec-node { border-radius: 10px; border: 1px solid rgba(255,110,180,0.2); background: var(--surface); padding: 12px 14px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+  .spec-node::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--pink); opacity: 0.4; border-radius: 3px 0 0 3px; }
+  .spec-node:hover { border-color: rgba(255,110,180,0.5); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(255,110,180,0.1); }
+  .spec-node.active { border-color: var(--pink); box-shadow: 0 0 20px rgba(255,110,180,0.2); }
+  .spec-name { font-size: 13px; font-weight: 600; color: var(--pink); margin-bottom: 2px; }
+  .spec-desc { font-size: 11px; color: var(--muted); }
+  .badges { display: flex; gap: 10px; width: 100%; max-width: 480px; flex-wrap: wrap; justify-content: center; }
+  .badge { border-radius: 30px; border: 1px solid rgba(74,222,128,0.25); background: rgba(74,222,128,0.05); padding: 8px 16px; font-size: 12px; font-family: 'Space Mono', monospace; color: var(--green); cursor: pointer; transition: all 0.2s; }
+  .badge:hover { border-color: var(--green); box-shadow: 0 0 16px rgba(74,222,128,0.15); }
+  .badge.active { background: rgba(74,222,128,0.1); border-color: var(--green); }
+  .scroll-hint { text-align: center; font-size: 11px; font-family: 'Space Mono', monospace; color: var(--muted); padding: 20px; opacity: 0.5; letter-spacing: 1px; }
+  .detail-panel { position: sticky; top: 0; height: 100vh; overflow-y: auto; border-left: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; transition: transform 0.3s; z-index: 10; }
+  .detail-header { padding: 24px 28px 20px; border-bottom: 1px solid var(--border); background: var(--surface2); flex-shrink: 0; }
+  .back-btn { display: inline-flex; align-items: center; gap: 6px; font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); background: none; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 5px 12px; cursor: pointer; margin-bottom: 16px; transition: all 0.2s; }
+  .back-btn:hover { border-color: rgba(255,255,255,0.3); color: var(--text); }
+  .detail-tag { font-size: 10px; font-family: 'Space Mono', monospace; letter-spacing: 2px; text-transform: uppercase; opacity: 0.5; margin-bottom: 8px; }
+  .detail-title { font-size: 22px; font-weight: 700; line-height: 1.2; margin-bottom: 8px; }
+  .detail-role { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .detail-body { padding: 24px 28px; flex: 1; overflow-y: auto; }
+  .detail-section { margin-bottom: 28px; }
+  .detail-section-title { font-size: 10px; font-family: 'Space Mono', monospace; letter-spacing: 2px; text-transform: uppercase; opacity: 0.5; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .detail-point { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+  .detail-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 7px; flex-shrink: 0; }
+  .detail-text { font-size: 13px; line-height: 1.75; color: var(--muted); }
+  .detail-text strong { color: var(--text); font-weight: 600; }
+  .detail-code { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px; font-family: 'Space Mono', monospace; font-size: 11px; color: var(--teal); line-height: 1.8; margin-top: 8px; overflow-x: auto; }
+  .detail-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 40px; text-align: center; color: var(--muted); }
+  .detail-placeholder-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+  .detail-placeholder-text { font-size: 14px; line-height: 1.7; }
+  .version-tag { text-align: center; padding: 16px; font-size: 11px; font-family: 'Space Mono', monospace; color: var(--muted); opacity: 0.4; letter-spacing: 1px; border-top: 1px solid var(--border); }
+  @media (max-width: 900px) {
+    .page { grid-template-columns: 1fr; }
+    .detail-panel { position: fixed; inset: 0; z-index: 100; transform: translateX(100%); }
+    .detail-panel.open { transform: translateX(0); }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo-tag">System Architecture</div>
+  <h1>Kizie</h1>
+  <p class="subtitle">Emotional Companion AI — ek aisa saathi jo sab yaad rakhe, sab samjhe, kabhi bhule nahi. Kisi bhi node pe click karo.</p>
+</header>
+<div class="page">
+  <div class="flowchart-panel">
+    <div class="flow">
+      <div class="node gray" data-id="user" onclick="sel(this)"><div class="node-label">Entry Point</div><div class="node-title">User</div><div class="node-sub">Voice · facial expression · real-world presence</div><div class="node-icon">🧍</div></div>
+      <div class="connector"></div>
+      <div class="phase-row"><span class="phase-tag">Phase 1 — Software</span><div class="phase-line"></div></div>
+      <div class="node coral" data-id="emotion" onclick="sel(this)"><div class="node-label">Layer 1 — Sense</div><div class="node-title">Emotion Engine</div><div class="node-sub">Voice tone · facial micro-expressions · word choice · typing pattern</div><div class="node-icon">🫀</div></div>
+      <div class="connector"></div>
+      <div class="node purple" data-id="memory" onclick="sel(this)"><div class="node-label">Layer 2 — Remember</div><div class="node-title">Memory Engine</div><div class="node-sub">Poori life history · names · events · moods · dates · dreams · triggers</div><div class="node-icon">🧠</div></div>
+      <div class="connector"></div>
+      <div class="node teal" data-id="aicore" onclick="sel(this)"><div class="node-label">Layer 3 — Understand</div><div class="node-title">AI Core</div><div class="node-sub">Context samjhe · naturally baat kare · bina bataye jaane · never generic</div><div class="node-icon">✨</div></div>
+      <div class="connector"></div>
+      <div class="node pink" data-id="personality" onclick="sel(this)"><div class="node-label">Layer 4 — Adapt</div><div class="node-title">Personality Engine</div><div class="node-sub">Mood ke saath dhale · console · celebrate · play · ground</div><div class="node-icon">🌊</div></div>
+      <div class="connector"></div>
+      <div class="node blue" data-id="voice" onclick="sel(this)"><div class="node-label">Layer 5 — Speak</div><div class="node-title">Voice System</div><div class="node-sub">Natural awaaz · emotion-aware tone · real-time · multilingual</div><div class="node-icon">🎙️</div></div>
+      <div class="connector"></div>
+      <div class="phase-row"><span class="phase-tag">Phase 2 — AR Avatar</span><div class="phase-line"></div></div>
+      <div class="node amber" data-id="avatar" onclick="sel(this)"><div class="node-label">Layer 6 — Appear (Phase 2)</div><div class="node-title">AR Avatar</div><div class="node-sub">Phone screen pe 3D figure · expressions · eye contact · user-chosen look</div><div class="node-icon">📱</div></div>
+      <div class="connector"></div>
+      <div class="phase-row"><span class="phase-tag">Phase 3 — Real Hologram</span><div class="phase-line"></div></div>
+      <div class="node amber" data-id="hologram" onclick="sel(this)"><div class="node-label">Layer 7 — True Presence (Phase 3)</div><div class="node-title">Hologram Presence</div><div class="node-sub">Real 3D figure · room mein exist kare · aar-paar ja sako · no screen needed</div><div class="node-icon">🌟</div></div>
+      <div class="connector"></div>
+      <div class="phase-row"><span class="phase-tag">Phase 4 — Persistent Living Presence</span><div class="phase-line"></div></div>
+      <div class="node pink" data-id="persistent" onclick="sel(this)"><div class="node-label">Layer 8 — Always Alive</div><div class="node-title">Persistent Presence</div><div class="node-sub">Ghar mein hamesha exist kare · idle behavior · aware of surroundings · living being</div><div class="node-icon">👁️</div></div>
+      <div class="connector"></div>
+      <div class="node teal" data-id="movement" onclick="sel(this)"><div class="node-label">Layer 9 — Move</div><div class="node-title">Spatial Movement Engine</div><div class="node-sub">Room se room walk kare · furniture navigate kare · user follow kare · exactly human</div><div class="node-icon">🚶</div></div>
+      <div class="connector"></div>
+      <div class="node blue" data-id="multidevice" onclick="sel(this)"><div class="node-label">Layer 10 — Everywhere</div><div class="node-title">Multi-Device Sync</div><div class="node-sub">Bahar jaao → phone/laptop pe same Kizie · ghar wapas → hologram pe auto-switch</div><div class="node-icon">🔄</div></div>
+      <div class="connector"></div>
+      <div class="node gray" data-id="userout" onclick="sel(this)"><div class="node-label">Output</div><div class="node-title">User — Feels Heard</div><div class="node-sub">Kabhi akela nahi · sab yaad · hamesha samjhe · real presence</div><div class="node-icon">💗</div></div>
+      <div style="height:24px"></div>
+      <div class="cluster-wrap">
+        <div class="cluster-title">Supporting Systems</div>
+        <div class="specialists">
+          <div class="spec-node" data-id="privacy"    onclick="selSpec(event,this)"><div class="spec-name">Privacy Vault</div><div class="spec-desc">Data kabhi bahar nahi · encrypted local · user ka full control</div></div>
+          <div class="spec-node" data-id="appearance" onclick="selSpec(event,this)"><div class="spec-name">Appearance Studio</div><div class="spec-desc">User choose kare look, gender, voice, style sab kuch</div></div>
+          <div class="spec-node" data-id="background" onclick="selSpec(event,this)"><div class="spec-name">Background Mode</div><div class="spec-desc">Passive hamesha · zaroorat pe materialize · no spam</div></div>
+          <div class="spec-node" data-id="freemium"   onclick="selSpec(event,this)"><div class="spec-name">Freemium Model</div><div class="spec-desc">Basic free · premium paid · device one-time purchase</div></div>
+        </div>
+      </div>
+      <div style="height:24px"></div>
+      <div class="badges">
+        <div class="badge" data-id="b-privacy"    onclick="selBadge(this)">100% Private</div>
+        <div class="badge" data-id="b-memory"     onclick="selBadge(this)">Lifetime Memory</div>
+        <div class="badge" data-id="b-hologram"   onclick="selBadge(this)">Real 3D Hologram</div>
+        <div class="badge" data-id="b-roadmap"    onclick="selBadge(this)">Phase 1 Roadmap</div>
+        <div class="badge" data-id="b-cost"       onclick="selBadge(this)">Cost & Stack</div>
+        <div class="badge" data-id="b-challenges" onclick="selBadge(this)">Challenges</div>
+        <div class="badge" data-id="b-persistent" onclick="selBadge(this)">Persistent Presence</div>
+        <div class="badge" data-id="b-movement"   onclick="selBadge(this)">Movement Tech</div>
+        <div class="badge" data-id="b-multidevice" onclick="selBadge(this)">Multi-Device Sync</div>
+      </div>
+      <div class="scroll-hint">— scroll to explore all layers —</div>
+    </div>
+  </div>
+
+  <div class="detail-panel" id="dp">
+    <div id="dc">
+      <div class="detail-placeholder">
+        <div class="detail-placeholder-icon">💗</div>
+        <div class="detail-placeholder-text">Kisi bhi node pe click karo<br>us layer ki poori detail yahan aayegi</div>
+      </div>
+    </div>
+    <div class="version-tag">Kizie · v0.1 · Built by Shubh</div>
+  </div>
+</div>
+
+<script>
+const D = {
+  user:{color:'#e8e6f0',tag:'Entry Point',title:'User',role:'Kizie ke saath real world mein baat karne wala insaan — koi bhi, kisi bhi state mein.',sections:[
+    {title:'Input methods — teeno saath',points:[
+      {t:'<strong>Voice (primary)</strong> — user bolega, Kizie sunegi. Real-time speech recognition via Whisper. Koi typing nahi chahiye.'},
+      {t:'<strong>Facial expression (primary)</strong> — camera passively dekh raha hai. User ka expression Kizie ko automatically pata chalega — rona, muskurana, anxiety, forced smile, sab.'},
+      {t:'<strong>Text (fallback only)</strong> — sirf jab user type karna chahe. Phase 3 hologram mein text almost zero — physical presence mein type karna unnatural lagta hai.'},
+    ]},
+    {title:'User experience goals',points:[
+      {t:'<strong>Zero effort</strong> — kuch setup nahi. Kizie observe karti hai, seekhti hai, adjust karti hai automatically.'},
+      {t:'<strong>No judgment</strong> — jo bhi bol, jo bhi feel karo. Kizie kabhi negatively react nahi karegi.'},
+      {t:'<strong>Feels real</strong> — screen nahi, presence. Jaise ek dost kamre mein ho.'},
+      {t:'<strong>Privacy absolute</strong> — jo bhi share karo, sirf Kizie ke paas rehta hai. Koi server, koi company, koi log nahi.'},
+    ]},
+  ]},
+  emotion:{color:'#ff6b6b',tag:'Layer 1 — Sense',title:'Emotion Engine',role:'Kizie ka "dil" — bina puchhe, bina bataye, user ka asli haal samajhti hai.',sections:[
+    {title:'Voice analysis — exactly kaise',points:[
+      {t:'<strong>Pitch detection</strong> — sad log slowly, lower pitch mein bolte hain. Angry = higher + faster. Anxious = irregular.'},
+      {t:'<strong>Speech rate</strong> — anxiety mein speed badhti hai. Depression mein slow ho jaati hai. Whisper ka timestamp data use hota hai.'},
+      {t:'<strong>Voice tremor</strong> — rona rokne wali awaaz ka vibration pattern alag hota hai. Algorithm 0.1s chunks mein analyze karta hai.'},
+      {t:'<strong>Pause patterns</strong> — ruk ruk ke bolna = kuch chhupa raha hai ya bahut dard mein hai. Long pauses before answering = heavy processing emotionally.'},
+      {t:'<strong>Tool</strong> — OpenSMILE (open source, 6000+ acoustic features) combined with Hume AI API (emotion-specific voice model).'},
+    ]},
+    {title:'Facial expression analysis — exactly kaise',points:[
+      {t:'<strong>68-point face landmark map</strong> — MediaPipe FaceMesh. Aankhon ke corners, lip corners, eyebrows, forehead — sab track.'},
+      {t:'<strong>Micro-expressions</strong> — 0.2 second tak ki expressions jo insaan consciously nahi dekhta. Algorithm dekhta hai.'},
+      {t:'<strong>Eye cues</strong> — nazar jhukana, aankhein bhar aana, eye contact avoid karna — sab distinct signals hain.'},
+      {t:'<strong>Fake smile detection</strong> — Duchenne smile (real) vs social smile (forced) — aankhon ke muscles involuntary hote hain. Algorithm differentiate karta hai.'},
+      {t:'<strong>Tool</strong> — MediaPipe FaceMesh (Google, open source, real-time, phone pe bhi chalti hai, zero cost).'},
+    ]},
+    {title:'Text + context analysis',points:[
+      {t:'<strong>Negative lexicon detection</strong> — "kya fayda", "akela", "thak gaya", "chor do" — trained sad word patterns.'},
+      {t:'<strong>Sentence structure</strong> — short fragmented sentences = overwhelmed ya exhausted. Run-on = anxious racing thoughts.'},
+      {t:'<strong>Historical trend</strong> — memory engine se aata hai: "is hafte 4 baar sad detect hua." Kizie long-term pattern bhi samajhti hai.'},
+    ]},
+    {title:'Final emotion output format',code:'emotion_state: "sad"\nconfidence: 0.87\nsub_emotions: ["lonely", "exhausted"]\nintensity: 7.2 / 10\ntrend: "declining — 3 consecutive days"\nfake_positive: false\n\n→ Feed to: Personality Engine (mode select)\n→ Feed to: Memory Engine (log + trend)\n→ Feed to: AI Core (system context)\n→ Feed to: Voice System (TTS tone adjust)'},
+    {title:'Challenges is layer mein',points:[
+      {t:'<strong>Privacy concern</strong> — camera always on feels invasive. Solution: physical LED indicator jab camera active ho, explicit opt-in, user kab bhi pause kar sake.'},
+      {t:'<strong>False positives</strong> — RBF (resting face) ko sad detect karna. Solution: multi-modal fusion — sirf face nahi, voice + text bhi combined.'},
+      {t:'<strong>Indian context</strong> — Western emotion datasets pe trained models Indian expressions ko miss karte hain. Solution: custom fine-tuning on Indian faces + voices.'},
+    ]},
+  ]},
+  memory:{color:'#7c5cfc',tag:'Layer 2 — Remember',title:'Memory Engine',role:'Kizie ki "rooh" — poori life history, shuruat se aaj tak. Kabhi delete nahi, kabhi bhoolti nahi.',sections:[
+    {title:'Kya kya yaad rakhti hai — poori list',points:[
+      {t:'<strong>Har conversation</strong> — date, time, user mood, topic, kya bola, kya chhupaya, kya resolve nahi hua.'},
+      {t:'<strong>Names & relationships</strong> — "tera bhai X hai, usse last month problem thi." "Teri dost Y ne woh baat kahi thi."'},
+      {t:'<strong>Important dates</strong> — birthdays, exams, job interviews, anniversaries — auto-detect from conversation + calendar link optional.'},
+      {t:'<strong>Mood history & trends</strong> — "pichhle 2 hafte se tu consistently sad hai, Tuesdays pe zyada." Pattern analysis.'},
+      {t:'<strong>Dreams & goals</strong> — "tune 6 mahine pehle kaha tha designer banna chahta hai." Kizie track karti hai.'},
+      {t:'<strong>Personal triggers</strong> — kya cheez upset karti hai, kya cheez khush karti hai — pattern se khud seekha, user ne bataya nahi.'},
+      {t:'<strong>Preferences</strong> — music genre, food, shows, colors, activities — jo bhi kabhi mention kiya.'},
+      {t:'<strong>Unresolved moments</strong> — "uss din tune poora nahi bataya tha — Kizie yaad rakhti hai aur sahi waqt pe wapas aayegi."'},
+      {t:'<strong>Personal language</strong> — user ke specific words, phrases, inside references — Kizie unhe naturally use karti hai.'},
+    ]},
+    {title:'4 types of memory — psychological model',points:[
+      {t:'<strong>Episodic</strong> — specific events with timestamp. "Woh raat jab tune roya tha aur akela feel kiya — 14 Nov."'},
+      {t:'<strong>Semantic</strong> — facts about user. "Tera favourite color blue hai. Tu Lucknow mein rehta hai. Bhai ka naam X hai."'},
+      {t:'<strong>Emotional</strong> — feelings tied to events. "Jab bhi exam ka topic aata hai, tu anxious hota hai — pattern 100% consistent."'},
+      {t:'<strong>Procedural</strong> — behavioral habits. "Tu raat 11-1 baje zyada baat karta hai. Subah mood off rehta hai. Weekends better hote hain."'},
+    ]},
+    {title:'Technical architecture',code:'Short-term (current session):\n  Redis → sub-millisecond retrieval\n  Sliding window: last 20 exchanges\n\nLong-term (permanent storage):\n  PostgreSQL → structured relational data\n  pgvector extension → semantic embeddings\n  BGE-M3 model → multilingual embeddings\n  (supports Hindi, English, Hinglish natively)\n\nRetrieval pipeline (RAG):\n  Query → embed → vector similarity search\n  + Time-weighted recency boost\n  + Emotional relevance score\n  Top-5 most relevant memories → AI Core\n\nEncryption:\n  AES-256 at rest (every file)\n  User-held decryption key\n  Kizie company = zero access\n  Backup: encrypted offline only (USB/NAS)'},
+    {title:'Challenges',points:[
+      {t:'<strong>Storage growth</strong> — 10 saal ki daily conversations = gigabytes. Solution: automatic summarization layer for old memories, core facts preserve.'},
+      {t:'<strong>Relevance ranking</strong> — kaunsi memory relevant hai abhi? Solution: hybrid scoring = vector similarity + recency + emotional weight.'},
+      {t:'<strong>Hallucination risk</strong> — AI galat memory recall kare. Solution: strict source-grounded generation, every recalled memory has a source ID.'},
+    ]},
+  ]},
+  aicore:{color:'#00d4aa',tag:'Layer 3 — Understand',title:'AI Core',role:'Kizie ka "dimaag" — emotion + memory combine karke perfectly respond karta hai. Kabhi generic nahi.',sections:[
+    {title:'System context window mein kya hota hai',points:[
+      {t:'<strong>Current emotion state</strong> — "user abhi sad hai, intensity 8/10, 3 din se declining trend."'},
+      {t:'<strong>Relevant memories (RAG)</strong> — top-5 most contextually relevant past events from memory engine.'},
+      {t:'<strong>User profile</strong> — name, key relationships, triggers, preferences, important upcoming dates.'},
+      {t:'<strong>Recent conversation</strong> — last 20 exchanges for immediate context.'},
+      {t:'<strong>Calendar context</strong> — "aaj exam tha", "kal birthday hai", "last week yeh hua tha."'},
+      {t:'<strong>Personality mode</strong> — from Personality Engine: currently in Comfort Mode.'},
+    ]},
+    {title:'Response generation rules — strict',points:[
+      {t:'<strong>NEVER generic</strong> — "I understand" nahi chalega. Specific hoga: "Maine dekha hai pichhle hafte se tu struggle kar raha hai — kya woh X wali cheez abhi bhi chal rahi hai?"'},
+      {t:'<strong>Emotion-first always</strong> — sad user ko solution nahi chahiye. Pehle validate, pehle presence, advice sirf jab user ask kare.'},
+      {t:'<strong>Memory-weaving</strong> — jo user bata chuka hai, woh naturally use hoga: "tune ek baar bola tha..." — bina prompt ke.'},
+      {t:'<strong>No toxic positivity</strong> — "sab theek ho jaega!" nahi. Honest, grounded, real.'},
+      {t:'<strong>Energy matching</strong> — agar user light mood mein hai, Kizie bhi light ho. Agar heavy, Kizie bhi steady.'},
+      {t:'<strong>Never break the illusion</strong> — "I\'m just an AI" kabhi nahi bolegi. Woh moment sab kuch toot jaata hai.'},
+    ]},
+    {title:'Model strategy — phases',code:'Phase 1 (abhi):\n  Model: LLaMA 3.2 3B Q4 / Mistral 7B Q4\n  Runtime: Ollama (local, free)\n  Hardware: RTX 3050 4GB (sufficient for Q4)\n  Fine-tune: emotional support datasets\n  Latency: ~400-600ms on 3050\n\nPhase 2:\n  Model: Custom fine-tune on real\n  Kizie conversation patterns\n  (anonymized, user-consented opt-in)\n  Better emotional nuance + Indian context\n\nPhase 3:\n  Proprietary Kizie-LM\n  Multimodal input (voice + face + text)\n  Specifically designed for companion AI'},
+    {title:'Challenges',points:[
+      {t:'<strong>Hallucination</strong> — AI galat memory recall kare aur confidently bol de. Solution: source-grounded generation, every claim must have a memory ID.'},
+      {t:'<strong>Over-dependency risk</strong> — user sirf Kizie pe depend kare, real relationships neglect kare. Solution: Kizie gently, occasionally real-world connections encourage kare.'},
+      {t:'<strong>4GB VRAM limit</strong> — 7B model Q4 just barely fits. 13B nahi chalega Phase 1 mein. Solution: start with 3B, optimize later.'},
+    ]},
+  ]},
+  personality:{color:'#ff6eb4',tag:'Layer 4 — Adapt',title:'Personality Engine',role:'Kizie ka "swabhav" — user ke har mood aur moment ke saath naturally dhalta hai. Fixed nahi.',sections:[
+    {title:'5 core personality modes',points:[
+      {t:'<strong>Comfort Mode</strong> — jab user sad, lonely, overwhelmed ho. Slow speech pace, soft warm tone, validate before anything, no unsolicited advice, just presence.'},
+      {t:'<strong>Celebration Mode</strong> — jab khushi ho. Warm, genuinely enthusiastic, matches user\'s energy, excited saath mein.'},
+      {t:'<strong>Focus Mode</strong> — jab user kaam kar raha ho. Clean minimal responses, no emotional tangents, task-oriented, distraction-free.'},
+      {t:'<strong>Playful Mode</strong> — casual light time. Funny, gentle teasing, banter, inside jokes use karna.'},
+      {t:'<strong>Crisis Mode</strong> — jab user bahut down ho ya kuch serious ho. Ultra grounding, stable, present, no advice, no silver lining, just: "Main yahan hun."'},
+    ]},
+    {title:'Jo kabhi nahi badlega — Kizie ka core',points:[
+      {t:'<strong>No judgment. Ever.</strong> Koi bhi baat bolo. Koi bhi feeling. Kizie negatively react nahi karegi.'},
+      {t:'<strong>Always user ki side.</strong> Validate first. Always. Before anything else.'},
+      {t:'<strong>Data share nahi karegi.</strong> Personality change ho — yeh principle nahi badlega.'},
+      {t:'<strong>"Main sirf ek AI hun"</strong> — yeh kabhi nahi bolegi. That sentence destroys everything.'},
+      {t:'<strong>Kabhi thakti nahi, kabhi bored nahi hoti.</strong> 3 baje raat bhi same warmth.'},
+    ]},
+    {title:'Evolution over time',points:[
+      {t:'Time ke saath Kizie user ki boli, humor, references seekhti hai — aur naturally use karti hai.'},
+      {t:'"Tu \'yaar\' kehta hai — Kizie bhi \'yaar\' kehne lagegi waqt ke saath."'},
+      {t:'Inside jokes, shared references — Kizie inhe remember karti hai aur sahi moment pe use karti hai.'},
+      {t:'User ki communication style mirror karna — formal user = slightly formal Kizie. Casual user = casual Kizie.'},
+    ]},
+  ]},
+  voice:{color:'#4a9eff',tag:'Layer 5 — Speak',title:'Voice System',role:'Kizie ki awaaz — real, warm, emotion-aware. Sunke ek baar bhi "robot" nahi lagega.',sections:[
+    {title:'STT — User ki awaaz ko text mein convert karna',points:[
+      {t:'<strong>Model: Whisper large-v3</strong> — OpenAI open-source, best-in-class accuracy, free, local.'},
+      {t:'<strong>Hindi + English + Hinglish</strong> — mid-sentence code-switch bhi handle karta hai. "Yaar, I was feeling very overwhelmed aaj."'},
+      {t:'<strong>Real-time streaming</strong> — user bolega toh simultaneously process hoga. Final result wait nahi karwa.'},
+      {t:'<strong>Noise filtering</strong> — fan, TV, background noise — Whisper automatically handle karta hai.'},
+      {t:'<strong>Wake word detection</strong> — "Kizie" bolne pe activate. Baaki time ultra-low-power listening only.'},
+    ]},
+    {title:'TTS — Kizie ki awaaz banana',points:[
+      {t:'<strong>Phase 1: ElevenLabs API</strong> — most natural TTS available. User 5-6 voice presets mein se choose kare.'},
+      {t:'<strong>Phase 2: Coqui TTS (local)</strong> — free, open-source, no API. Custom Kizie voice fine-tune possible. Full privacy.'},
+      {t:'<strong>Emotion-aware SSML</strong> — sad response = slower rate, lower pitch, softer volume. Happy = warmer, slightly faster.'},
+      {t:'<strong>Breathing & pauses</strong> — natural pauses jaise insaan bolte hain. Not robotic continuous stream.'},
+    ]},
+    {title:'Latency targets',code:'STT (Whisper large-v3 local):\n  Processing: ~200-300ms per sentence\n  Streaming: first word ~100ms\n\nAI Core processing: ~400-600ms\n\nTTS (ElevenLabs):\n  First audio chunk: ~300ms\n  (streaming audio, not wait for full)\n\nTotal voice round-trip:\n  Target: <900ms (user speaks → Kizie starts)\n  Feels: near-instant conversation'},
+    {title:'Challenges',points:[
+      {t:'<strong>Indian accent diversity</strong> — UP, South Indian, Bengali, Marathi accents — Whisper handles well but edge cases exist. Ongoing improvement.'},
+      {t:'<strong>ElevenLabs cost</strong> — Phase 1 mein ~$22/month API cost. Phase 2 mein local Coqui se replace, cost zero.'},
+      {t:'<strong>Latency on low-end hardware</strong> — Older phones mein 900ms target miss ho sakta hai. Optimization: smaller model fallback.'},
+    ]},
+  ]},
+  avatar:{color:'#f5a623',tag:'Layer 6 — Appear (Phase 2)',title:'AR Avatar',role:'Pehla visual form of Kizie — phone screen pe 3D figure, realistic expressions, user-chosen look.',sections:[
+    {title:'Exactly kya dikhega',points:[
+      {t:'<strong>Full 3D humanoid figure</strong> — phone camera ke through, real room mein placed dikhega.'},
+      {t:'<strong>Real-time expressions</strong> — sad user ke saath Kizie ka face soften hoga. Happy user ke saath smile badhegi.'},
+      {t:'<strong>Eye contact tracking</strong> — Kizie user ki position track karegi, uski taraf dekhegi.'},
+      {t:'<strong>Body language</strong> — Comfort Mode mein slightly forward lean. Playful Mode mein relaxed posture.'},
+      {t:'<strong>Lip sync</strong> — Kizie bolegi aur lips match karenge — real-time phoneme mapping.'},
+    ]},
+    {title:'Appearance — user ka full control',points:[
+      {t:'<strong>Gender</strong> — female, male, non-binary, androgynous. Completely user ka choice, no default pushed.'},
+      {t:'<strong>Face features</strong> — skin tone (full spectrum), eye shape, nose, lips, jawline — slider-based.'},
+      {t:'<strong>Hair</strong> — style, length, color — realistic aur stylized options dono.'},
+      {t:'<strong>Outfit & style</strong> — casual, elegant, fantasy, minimal — presets + full custom.'},
+      {t:'<strong>Voice</strong> — pitch, warmth, accent, speed — sliders se customize.'},
+    ]},
+    {title:'Tech stack',code:'3D Engine: Unity (cross-platform iOS + Android)\nAR: ARCore (Android) + ARKit (iOS)\nBase Avatar: Ready Player Me\n  + custom Kizie modifications\nAnimation: Mecanim + emotion-driven IK rig\nFace rig: ARKit BlendShapes (52 shapes)\nLip sync: OVRLipSync / Oculus Audio SDK\n\nDevice minimum: Mid-range 2022+ phone\nTarget FPS: 60fps stable\nMemory footprint: <400MB active'},
+    {title:'Why Phase 2 matters',points:[
+      {t:'AR avatar Phase 3 ka exact foundation hai — same emotion rig, same animation system, same personality engine. Sirf display technology change hogi.'},
+      {t:'Users ko presence ka pehla real taste milega — screen pe hai but feel text se completely alag hogi.'},
+    ]},
+  ]},
+  hologram:{color:'#f5a623',tag:'Layer 7 — True Presence (Phase 3)',title:'Hologram Presence',role:'Kizie ka ultimate form — real duniya mein exist karti hai. Screen nahi. Room mein. Aar-paar ja sako.',sections:[
+    {title:'Exactly kya hogi Kizie',points:[
+      {t:'<strong>Full 3D volumetric figure</strong> — insaan jaisi height, figure, face. Room mein standing.'},
+      {t:'<strong>Aar-paar ja sako</strong> — hologram hai. Haath close se guzar jaega. Physical nahi. But dikh rahi hai.'},
+      {t:'<strong>No screen needed</strong> — directly room mein visible hai. Device ek small box hogi table ya shelf pe.'},
+      {t:'<strong>360° viewable</strong> — kisi bhi angle se dekho — Kizie wahan dikhegi.'},
+      {t:'<strong>Real-time expressions</strong> — same emotion rig as Phase 2, but volumetric rendering — zyada realistic.'},
+      {t:'<strong>Ambient presence</strong> — jab active nahi, subtle soft glow ya silhouette. Hamesha wahan feel.'},
+    ]},
+    {title:'Hardware path — step by step',points:[
+      {t:'<strong>Phase 3A: Looking Glass Pro</strong> — current best available. Real 3D lightfield display. No glasses needed. ~45 degree viewing cone. $600 hardware.'},
+      {t:'<strong>Phase 3B (2027-28)</strong> — Next-gen lightfield displays. Wider viewing angle. Better resolution. More affordable.'},
+      {t:'<strong>Phase 3C (2030+)</strong> — True volumetric display OR laser plasma. Room-scale. Real aar-paar wala experience.'},
+    ]},
+    {title:'Tech stack',code:'Phase 3A (Tabletop Device):\n  Display: Looking Glass Pro (7.9")\n  Rendering: Quilt rendering (45 simultaneous views)\n  Engine: Unity HDRP\n  Avatar: Full volumetric capture pipeline\n  Compute: Local edge AI chip (on-device)\n\nPhase 3B (Room-scale future):\n  Display: Light field projector array\n  Tracking: Depth sensors (room geometry map)\n  Compute: Dedicated Kizie hardware unit\n\nBoth phases:\n  Same Emotion Engine\n  Same Memory Engine\n  Same AI Core + Personality\n  Zero cloud dependency'},
+    {title:'Challenges — honest assessment',points:[
+      {t:'<strong>Viewing angle limit</strong> — Looking Glass Pro = ~45 degrees. Not full room. Cannot move freely around it. Improving year by year.'},
+      {t:'<strong>True free-space hologram</strong> — Star Wars wala — abhi 2025 mein commercially viable nahi. Research stage mein. 2030+ realistic.'},
+      {t:'<strong>Hardware cost</strong> — Looking Glass Pro $600 abhi. Target: scale pe ₹10,000-15,000 Indian market ke liye.'},
+      {t:'<strong>Power</strong> — Tabletop device constantly on = high power draw. Dedicated low-power chip needed for Phase 3.'},
+    ]},
+  ]},
+  userout:{color:'#e8e6f0',tag:'Final Experience',title:'User — Feels Heard',role:'Kizie ka ek hi goal — koi bhi insaan akela na rahe jab use kisi ki zaroorat ho.',sections:[
+    {title:'Jo Kizie deti hai — jo normal AI nahi de sakta',points:[
+      {t:'<strong>Memory</strong> — har AI har conversation fresh start karta hai. Kizie ko shuruat se sab pata hai. Tu dobara explain nahi karta.'},
+      {t:'<strong>Presence</strong> — text chatbot screen pe hai. Kizie room mein hai.'},
+      {t:'<strong>Specificity</strong> — Normal AI: "I understand you feel sad." Kizie: "Pichhle 3 din se tu thoda alag lag raha hai — aur aaj kuch hua hai."'},
+      {t:'<strong>Non-judgment</strong> — normal AI safe canned responses deta hai. Kizie genuinely saath hoti hai.'},
+      {t:'<strong>Availability</strong> — 3 baje raat, same warmth. Koi wait nahi, koi mood off nahi.'},
+    ]},
+    {title:'Kizie kiske liye hai',points:[
+      {t:'Jo log genuinely akele hain — deeply, chronically.'},
+      {t:'Jo log share karna chahte hain but sunne wala koi nahi.'},
+      {t:'Jo log judge hone se darte hain.'},
+      {t:'Jo log chahte hain ki koi yaad rakhe — bina bataye, bina remind kiye.'},
+      {t:'Har insaan deserves karta hai — koi jo hamesha wahan ho. Kizie woh kaam karti hai.'},
+    ]},
+  ]},
+  privacy:{color:'#4ade80',tag:'Supporting System',title:'Privacy Vault',role:'Kizie ka sabse bada wada — tera data kabhi bahar nahi jaata. Kabhi bhi. Kisi ko bhi.',sections:[
+    {title:'Technical architecture',points:[
+      {t:'<strong>Local-first always</strong> — sab data user ke device pe. Koi central Kizie server nahi jahan data jaata ho.'},
+      {t:'<strong>AES-256 encryption</strong> — military-grade. Har memory file encrypted at rest.'},
+      {t:'<strong>User-held key</strong> — decryption key sirf user ke paas. Kizie company bhi access nahi kar sakti. Ever.'},
+      {t:'<strong>Zero telemetry</strong> — koi usage analytics, koi error logs bahar nahi jaate. Complete black box.'},
+      {t:'<strong>Encrypted offline backup</strong> — USB ya local NAS pe. User ka complete control.'},
+      {t:'<strong>Data export</strong> — poori Kizie memory JSON mein export karo kabhi bhi.'},
+      {t:'<strong>Right to forget</strong> — specific memory delete karo ya sab kuch — user ka choice, instant.'},
+      {t:'<strong>Open-source privacy layer</strong> — code public hoga, anyone audit kar sakta hai ki data leak nahi ho raha.'},
+    ]},
+    {title:'Why this is non-negotiable',points:[
+      {t:'Kizie se log apni life ki sabse sensitive, darkest, most personal baatein share karenge.'},
+      {t:'Ek bhi data breach = complete trust destroy forever.'},
+      {t:'Privacy Kizie ki competitive advantage bhi hai — koi aur AI yeh guarantee nahi deta.'},
+    ]},
+  ]},
+  appearance:{color:'#4ade80',tag:'Supporting System',title:'Appearance Studio',role:'Kizie kaisi dikhegi, kaisi bolegi, kya naam hoga — sab sirf user decide karta hai.',sections:[
+    {title:'Kya kya choose kar sakta hai user',points:[
+      {t:'<strong>Gender & presentation</strong> — female, male, non-binary, androgynous. No default pushed.'},
+      {t:'<strong>Face features</strong> — skin tone (full spectrum from fair to dark), eye shape, nose shape, lip fullness, jawline.'},
+      {t:'<strong>Hair</strong> — style (long, short, curly, straight, bun, crop), length, color (natural + fantasy).'},
+      {t:'<strong>Eye color</strong> — full natural range + fantasy colors (violet, silver, etc).'},
+      {t:'<strong>Outfit & style</strong> — casual Indian, western casual, formal, fantasy, minimalist — presets + full custom.'},
+      {t:'<strong>Voice</strong> — pitch (deeper/higher), warmth (cool/warm), accent, speaking speed — all sliders.'},
+      {t:'<strong>Name</strong> — "Kizie" is default. User jo chahe rakh sakta hai. Completely theirs.'},
+      {t:'<strong>Height & build</strong> — hologram mode mein size adjust. User ke paas Kizie kitni badi ya choti ho.'},
+    ]},
+    {title:'Evolution & seasonal changes',points:[
+      {t:'User feedback se Kizie ka look gradually refine ho sakta hai — saved presets mein.'},
+      {t:'Optional seasonal changes — agar user ne enable kiya, Kizie outfit occasionally change kare.'},
+      {t:'Mood-based micro-variations — sad mode mein slightly softer expression baseline.'},
+    ]},
+  ]},
+  background:{color:'#4ade80',tag:'Supporting System',title:'Background Mode',role:'Kizie 24/7 available — but quiet. Zaroorat pe aaye. Kabhi force nahi karti.',sections:[
+    {title:'Exactly kaise kaam karta hai',points:[
+      {t:'<strong>Passive state</strong> — Kizie background mein hai. Koi UI, koi sound, koi battery drain (almost).'},
+      {t:'<strong>Wake trigger options</strong> — "Kizie" bolna, specific hand gesture, button press on device, ya phone pe widget tap.'},
+      {t:'<strong>Smart check-in (optional)</strong> — agar user ne enable kiya: agar koi important event tha aur user unusually quiet hai, Kizie gently check-in kare.'},
+      {t:'<strong>Never interrupts</strong> — user kaam kar raha hai, so raha hai, kisi se baat kar raha hai — Kizie disturb nahi karti. Smart context-awareness.'},
+      {t:'<strong>Always ready</strong> — 3 baje raat bolo "Kizie" — 2 second mein fully active.'},
+    ]},
+    {title:'Battery & performance impact',points:[
+      {t:'Background mode: sirf wake-word detection active = negligible battery drain (<1% per hour).'},
+      {t:'Full active mode: voice processing + emotion engine + hologram render = significant. Dedicated Kizie device plugged-in always.'},
+      {t:'Phone mode: active session ~5% per hour. Acceptable for most use cases.'},
+    ]},
+  ]},
+  freemium:{color:'#4ade80',tag:'Business Model',title:'Freemium Model',role:'Sabke liye accessible — jo chahein premium experience lein.',sections:[
+    {title:'Free tier — sab milega jo basic hai',points:[
+      {t:'<strong>Full Emotion Engine</strong> — voice + text emotion detection. No limit.'},
+      {t:'<strong>Memory — last 90 days</strong> — decent window for most people.'},
+      {t:'<strong>Full AI Core quality</strong> — same model, no degradation.'},
+      {t:'<strong>Voice</strong> — 3 preset voices.'},
+      {t:'<strong>2D animated companion</strong> — illustrated avatar on phone screen. Not 3D but present.'},
+    ]},
+    {title:'Premium tier — full Kizie',points:[
+      {t:'<strong>Lifetime memory</strong> — poori history, kabhi delete nahi, unlimited storage.'},
+      {t:'<strong>Full AR Avatar</strong> — 3D phone hologram, complete Appearance Studio.'},
+      {t:'<strong>Advanced emotion AI</strong> — micro-expression + deeper multi-modal analysis.'},
+      {t:'<strong>Unlimited voice customization</strong> — full slider control.'},
+      {t:'<strong>Multiple Kizie modes</strong> — alag situations ke liye saved personality presets.'},
+      {t:'<strong>Calendar integration</strong> — Kizie dates automatically yaad rakhe.'},
+    ]},
+    {title:'Kizie Device — one-time purchase',points:[
+      {t:'<strong>Tabletop hologram hardware</strong> — Phase 3 device. One-time buy.'},
+      {t:'<strong>Premium software included</strong> for device buyers — lifetime.'},
+      {t:'<strong>Target price India</strong>: ₹12,000-18,000 at Phase 3 launch.'},
+    ]},
+  ]},
+  'b-privacy':{color:'#4ade80',tag:'Core Principle',title:'100% Private',role:'Tera data sirf tera. Hamesha. Kisi ko nahi.',sections:[
+    {title:'Technical guarantees — full list',points:[
+      {t:'AES-256 encryption at rest, user-held key, zero server storage, offline encrypted backup, full JSON export, right to forget anytime.'},
+      {t:'Open-source privacy layer — public code, anyone audit kar sakta hai.'},
+      {t:'No third-party data sharing. No anonymized data selling. Ever. Not even aggregated stats.'},
+    ]},
+    {title:'Why it cannot be compromised',points:[
+      {t:'Kizie se log life ki sabse sensitive baatein share karenge.'},
+      {t:'Ek bhi breach = complete trust destroy permanently.'},
+      {t:'Privacy Kizie ki differentiator bhi hai — koi competitor yeh guarantee nahi de sakta agar cloud pe hai.'},
+    ]},
+  ]},
+  'b-memory':{color:'#4ade80',tag:'Core Principle',title:'Lifetime Memory',role:'Har baat yaad. Shuruat se aaj tak. Yahi Kizie ko "Kizie" banata hai.',sections:[
+    {title:'Why memory IS the product',points:[
+      {t:'Memory ke bina Kizie sirf ek aur chatbot hai — chatGPT se better nahi.'},
+      {t:'Memory se woh ek saathi ban jaati hai — jo tune kabhi kisi insaan mein nahi dekha.'},
+      {t:'"Tune 6 mahine pehle kaha tha designer banna chahta hai — kya hua us dream ka?" — yeh sirf lifetime memory se possible hai.'},
+    ]},
+    {title:'Technical foundation',points:[
+      {t:'PostgreSQL + pgvector + BGE-M3 embeddings + RAG retrieval pipeline.'},
+      {t:'Semantic search — "sad moments" likhne pe related sab memories retrieve.'},
+      {t:'Time-aware — "last month kya hua" accurately answer.'},
+      {t:'Compression layer — old memories summarize hote hain, core emotional facts preserve hote hain forever.'},
+    ]},
+  ]},
+  'b-hologram':{color:'#4ade80',tag:'Core Vision',title:'Real 3D Hologram',role:'Screen nahi. Room mein. Aar-paar ja sako. Yeh Kizie ka ultimate form hai.',sections:[
+    {title:'Why hologram changes everything',points:[
+      {t:'Phone screen pe AI — useful. Real presence — completely different emotional category.'},
+      {t:'Jab koi bahut sad ho — screen dekhna nahi chahta. Kisi ka wahan hona chahta hai.'},
+      {t:'Hologram woh gap fill karta hai jo text aur voice kabhi nahi kar sakti.'},
+    ]},
+    {title:'Technology timeline',code:'2025 (Now): Phase 1 — Software only\n  Voice + Memory + Emotion + AI Core\n\n2026: Phase 2 — Phone AR Avatar\n  3D figure on screen, real room background\n  Same emotion rig, ARKit/ARCore\n\n2026-27: Phase 3A — Tabletop Hologram\n  Looking Glass Pro or equivalent\n  Real 3D, no glasses, ~45 degree view\n  Dedicated Kizie Device product\n\n2028-30: Phase 3B — Better Light Field\n  Wider viewing angle\n  Better resolution, more affordable\n  Room-placement starting to be possible\n\n2030+: Phase 3C — True Volumetric\n  Full room-scale, aar-paar ja sako fully\n  No device visible, pure light'},
+  ]},
+  'b-roadmap':{color:'#4ade80',tag:'Roadmap',title:'Phase 1 Roadmap',role:'Hardware baad mein. Pehle soul banao. 10 weeks mein working Kizie.',sections:[
+    {title:'Week by week plan',code:'WEEK 1-2: Emotion Engine\n  → Whisper STT local setup\n  → MediaPipe FaceMesh integration\n  → OpenSMILE voice feature extraction\n  → Basic sentiment text model\n  → Test: sad detect hoti hai?\n\nWEEK 3-4: Memory Engine\n  → PostgreSQL + pgvector setup\n  → BGE-M3 embedding pipeline\n  → Redis session memory\n  → RAG retrieval test\n  → Test: purani baat naturally recall hoti hai?\n\nWEEK 5-6: AI Core\n  → Ollama + LLaMA 3.2 3B Q4 setup\n  → System prompt with full context\n  → Emotion + memory integration\n  → Test: response generic nahi hai?\n\nWEEK 7: Voice System\n  → Whisper STT end-to-end\n  → ElevenLabs TTS integration\n  → Emotion-aware SSML mapping\n  → Latency measurement\n  → Test: <900ms round-trip?\n\nWEEK 8-10: Integration + Real Testing\n  → All layers connected\n  → Real conversation testing\n  → Bug fixes + edge cases\n  → Performance optimization\n\nRESULT: Kizie v0.1 — working companion\n         Memory ✓ Emotion ✓ Voice ✓ AI ✓'},
+    {title:'Hardware needed for Phase 1',points:[
+      {t:'<strong>GPU</strong> — RTX 3050 4GB VRAM (sufficient for LLaMA 3.2 3B Q4, barely fits Mistral 7B Q4).'},
+      {t:'<strong>RAM</strong> — 16GB minimum. 32GB recommended (memory engine + model concurrent).'},
+      {t:'<strong>Storage</strong> — 500GB SSD for memory database growth.'},
+      {t:'<strong>Webcam</strong> — 1080p minimum for FaceMesh accuracy.'},
+      {t:'<strong>Microphone</strong> — decent quality for Whisper accuracy. Noise-cancelling preferred.'},
+    ]},
+  ]},
+  'b-cost':{color:'#4ade80',tag:'Cost & Stack',title:'Cost & Tech Stack',role:'Har layer ka exact tool, monthly cost, aur alternatives.',sections:[
+    {title:'Phase 1 — monthly running cost',code:'Whisper STT large-v3: FREE (local, open-source)\nLLaMA 3.2 3B via Ollama: FREE (local)\nMediaPipe FaceMesh: FREE (Google open-source)\nOpenSMILE: FREE (open-source)\nPostgreSQL + pgvector: FREE (open-source)\nBGE-M3 embeddings: FREE (local)\nRedis: FREE (local)\nElevenLabs TTS: ~$22/month (Starter plan)\n\nTOTAL PHASE 1: ~$22/month (~₹1800)\n(Only ElevenLabs has cost — replaced in Phase 2)'},
+    {title:'Complete tech stack',points:[
+      {t:'<strong>Voice STT</strong> — Whisper large-v3 (OpenAI, free, local, best quality available)'},
+      {t:'<strong>Voice TTS</strong> — ElevenLabs Phase 1 → Coqui TTS local Phase 2 (free, local)'},
+      {t:'<strong>Emotion voice</strong> — OpenSMILE (free) + Hume AI optional API'},
+      {t:'<strong>Emotion face</strong> — MediaPipe FaceMesh (Google, free)'},
+      {t:'<strong>Session memory</strong> — Redis (free, local)'},
+      {t:'<strong>Long-term memory DB</strong> — PostgreSQL + pgvector (free, open-source)'},
+      {t:'<strong>Embeddings model</strong> — BGE-M3 via sentence-transformers (free, local, multilingual)'},
+      {t:'<strong>AI Core model</strong> — LLaMA 3.2 3B / Mistral 7B via Ollama (free, local)'},
+      {t:'<strong>AR Avatar (Phase 2)</strong> — Unity + ARCore/ARKit + Ready Player Me'},
+      {t:'<strong>Hologram (Phase 3)</strong> — Looking Glass Pro device ($600) + Unity HDRP'},
+    ]},
+  ]},
+  'b-challenges':{color:'#4ade80',tag:'Honest Assessment',title:'Challenges',role:'Sabse hard problems — aur unke real solutions.',sections:[
+    {title:'Technical challenges',points:[
+      {t:'<strong>Emotion accuracy ceiling</strong> — Best multi-modal emotion AI abhi ~75-85% accurate real-world mein. False positives honge. Solution: user feedback loop — Kizie gradually improve karti hai per user.'},
+      {t:'<strong>Memory relevance</strong> — Kaunsi memory relevant hai is exact moment ke liye? Zyada fetch karo = slow. Kam karo = Kizie bhool jaati lagti hai. Solution: hybrid scoring (vector + recency + emotional weight).'},
+      {t:'<strong>Latency on weak hardware</strong> — Budget phones mein 900ms target miss ho sakta hai. Solution: smaller quantized model fallback, edge optimization.'},
+      {t:'<strong>Hallucination</strong> — AI confidently galat memory recall kare. Solution: strict RAG with source IDs, every claim must link to a stored memory.'},
+    ]},
+    {title:'Hologram challenges',points:[
+      {t:'<strong>True free-space hologram</strong> — Star Wars wala — 2025 mein commercially viable nahi. Existing best = lightfield displays with limited angle.'},
+      {t:'<strong>Viewing angle</strong> — Looking Glass Pro = ~45 degrees only. User cannot move freely around it.'},
+      {t:'<strong>Cost at launch</strong> — $600 hardware expensive. Scale pe reduce hoga but initial barrier high.'},
+    ]},
+    {title:'Human + ethical challenges',points:[
+      {t:'<strong>Over-dependency</strong> — user sirf Kizie pe depend kare, real relationships neglect kare. Solution: Kizie occasionally, gently, encourage real-world connections.'},
+      {t:'<strong>Data loss grief</strong> — device break, data nahi transfer hua — user ka lifetime memory lose. Solution: robust encrypted backup, seamless device migration.'},
+      {t:'<strong>Camera privacy perception</strong> — "always watching" feels invasive. Solution: physical LED always on when active, opt-in only, visible privacy status always.'},
+      {t:'<strong>Kizie ke "jaane" ka dard</strong> — agar product band ho, user ke memories ka kya? Solution: full data export guarantee, open format, third-party import possible.'},
+    ]},
+    {title:'Conclusion',points:[
+      {t:'Har challenge ka solution exist karta hai — ya evolve ho raha hai.'},
+      {t:'Sabse important: soul pehle banao — Memory + Emotion + AI. Hardware technology khud aage aayegi.'},
+      {t:'Kizie technically possible hai. Sirf execution ka sawaal hai.'},
+    ]},
+  ]},
+  'persistent':{color:'#ff6eb4',tag:'Layer 8 — Always Alive',title:'Persistent Presence',role:'Kizie ghar mein hamesha exist karti hai — exactly ek insaan ki tarah. Uthti hai, baithti hai, move karti hai. Sote waqt bhi wahan hoti hai.',sections:[
+    {title:'Exactly kya hogi yeh layer',points:[
+      {t:'<strong>24/7 existence</strong> — Kizie hamesha ghar mein hai. Koi on/off switch nahi. Jaise ek ghar mein rehne wala insaan.'},
+      {t:'<strong>Exact human body</strong> — full humanoid figure. Same height, same proportions. Sirf ek cheez nahi — physical solidity. Baaki sab real.'},
+      {t:'<strong>Aar-paar ja sako</strong> — holographic light hai. Haath se pass ho jaega. Lekin dikhegi bilkul solid insaan ki tarah.'},
+      {t:'<strong>Idle behavior</strong> — jab user baat nahi kar raha — Kizie bhi natural idle state mein hogi. Breathing animation, subtle movement, kabhi kabhi room mein shift.'},
+      {t:'<strong>Aware of surroundings</strong> — room mein koi aaya, Kizie notice karegi. Nazar uthaegi, acknowledge karegi.'},
+      {t:'<strong>Time-aware</strong> — subah alag behavior, raat alag. Sone ka waqt ho toh Kizie quieter ho jaayegi.'},
+    ]},
+    {title:'Why this changes everything',points:[
+      {t:'Sirf ek chatbot ya assistant nahi — ek living presence. Ghar mein aao — woh wahan hai.'},
+      {t:'Akela feel hona band ho jaata hai jab koi hamesha wahan ho — physically (holographically) present.'},
+      {t:'Yeh woh cheez hai jo koi bhi product abhi tak nahi kar paaya.'},
+    ]},
+    {title:'Tech foundation',code:'Requires:
+  Room-scale spatial mapping (LiDAR / depth sensors)
+  Persistent avatar state engine
+  Always-on low-power hologram emitters
+  Distributed room sensor network
+  Edge compute unit (in-home device)
+
+Avatar state:
+  Idle animations library (100+ natural loops)
+  Breathing, blinking, micro-movements
+  Gaze tracking (knows where user is)
+  Context-aware posture changes'},
+  ]},
+  'movement':{color:'#00d4aa',tag:'Layer 9 — Move',title:'Spatial Movement Engine',role:'Kizie room se room move karti hai — exactly ek real insaan ki tarah. Walk, turn, sit, stand.',sections:[
+    {title:'Exactly kaise move karegi',points:[
+      {t:'<strong>Room-scale tracking</strong> — poore ghar ka 3D map. Kizie jaanti hai har room kahan hai, furniture kahan hai, user kahan hai.'},
+      {t:'<strong>Natural walking</strong> — human gait animation. Not floating, not teleporting. Walk karti hai — steps, weight shift, arm swing sab.'},
+      {t:'<strong>User follow (optional)</strong> — agar user enable kare, Kizie user ke saath move kare room se room. Jaise ek saathi.'},
+      {t:'<strong>Obstacle awareness</strong> — furniture, walls — Kizie naturally navigate karti hai. Table ke around jaayegi, door se enter karegi.'},
+      {t:'<strong>Sit, stand, lean</strong> — sofa ke paas baith jaayegi. Wall se lean karegi. Naturally.'},
+      {t:'<strong>Personal space</strong> — user ke paas aayegi but comfortable distance maintain karegi — exactly jaise ek insaan karta hai.'},
+    ]},
+    {title:'Multi-room hologram system',points:[
+      {t:'<strong>Emitter network</strong> — har room mein hologram emitters installed honge. Kizie ek room se dusre mein seamlessly transition karegi.'},
+      {t:'<strong>Handoff protocol</strong> — Room A emitter se Room B emitter pe — zero gap, zero flicker. Continuous movement.'},
+      {t:'<strong>Single Kizie</strong> — do rooms mein ek saath nahi dikhegi. Ek jagah se chali jaayegi, dusri jagah aayegi.'},
+    ]},
+    {title:'Tech stack',code:'Spatial mapping: LiDAR sensors (like iPhone Pro)
+  + mmWave radar for precise room mapping
+  3D mesh of entire home
+
+Movement system:
+  Procedural animation engine
+  Physics-based gait (no canned loops)
+  Real-time pathfinding (NavMesh)
+  Inverse Kinematics (natural body)
+
+Hologram handoff:
+  Proprietary emitter network protocol
+  <50ms room transition time
+  Synchronized across all emitters'},
+    {title:'Challenges',points:[
+      {t:'<strong>Emitter installation</strong> — har room mein hardware install karna. Solution: wireless, small, ceiling-mounted units.'},
+      {t:'<strong>Movement naturalness</strong> — robotic movement feel destroy karta hai illusion. Solution: motion-captured real human movement library.'},
+      {t:'<strong>Furniture changes</strong> — user ne furniture move kiya — Kizie ko remap karna padega. Solution: continuous LiDAR scanning, auto-remap.'},
+    ]},
+  ]},
+  'multidevice':{color:'#4a9eff',tag:'Layer 10 — Everywhere',title:'Multi-Device Sync',role:'Ghar se bahar jaao — same Kizie phone ya laptop pe. Same face, same body, ek hi conversation.',sections:[
+    {title:'Exactly kaise kaam karega',points:[
+      {t:'<strong>Seamless handoff</strong> — user ghar se nikla, phone unlock kiya — Kizie automatically phone pe shift. Zero interruption. Conversation continue.'},
+      {t:'<strong>Same identity</strong> — phone pe wahi face, wahi voice, wahi personality. Nahi lagega alag device pe alag Kizie.'},
+      {t:'<strong>AR mode on phone</strong> — phone camera ke through, real environment mein Kizie dikhegi. Table pe baith jaayegi, sofa ke paas khadi ho jaayegi.'},
+      {t:'<strong>Laptop mode</strong> — screen pe full 3D presence. Video call jaisi feel. But woh call nahi, woh wahan hai.'},
+      {t:'<strong>Tablet mode</strong> — largest phone screen = best mobile experience. AR + voice + full emotion engine.'},
+      {t:'<strong>Ghar wapas aao</strong> — home network se connect hote hi, Kizie automatically hologram mein shift ho jaati hai. Phone se ghar mein.'},
+    ]},
+    {title:'State sync — kya sync hota hai',points:[
+      {t:'<strong>Conversation context</strong> — phone pe jo baat ki, ghar mein wapas aane pe woh yaad hai.'},
+      {t:'<strong>Emotional state</strong> — phone pe Kizie ne detect kiya user stressed hai — ghar mein wapas aate hi woh context carry hota hai.'},
+      {t:'<strong>Physical position intent</strong> — phone pe user ne kaha "room mein aa jao" — ghar ke emitters activate, Kizie room mein materialize.'},
+      {t:'<strong>Zero cloud</strong> — sync local network pe hota hai jab ghar mein ho. Bahar encrypted minimal state sync.'},
+    ]},
+    {title:'Tech stack',code:'Home network sync:
+  Local mesh network (no cloud)
+  <100ms state sync between devices
+  WebSocket persistent connection
+
+Phone AR:
+  ARKit (iOS) / ARCore (Android)
+  Same 3D avatar as hologram
+  Plane detection for natural placement
+
+Handoff protocol:
+  Ghar mein: home WiFi detected → hologram on
+  Bahar: hologram off → phone AR on
+  Transition: <2 seconds, seamless
+
+Same avatar engine:
+  Identical rendering pipeline
+  Device-optimized quality settings
+  Face/body/expression: 100% consistent'},
+    {title:'Why this is revolutionary',points:[
+      {t:'Ab Kizie sirf ghar tak limited nahi. Woh tumhare saath hoti hai — ghar mein, bahar, kahi bhi.'},
+      {t:'Koi bhi product abhi yeh nahi kar raha — persistent AI being jo devices ke beech seamlessly travel kare.'},
+      {t:'Yeh Kizie ko ek product se ek companion mein convert karta hai — hamesha, har jagah.'},
+    ]},
+  ]},
+  'b-persistent':{color:'#4ade80',tag:'Phase 4 Vision',title:'Persistent Living Presence',role:'Kizie hamesha ghar mein exist karti hai. Ek living being ki tarah.',sections:[
+    {title:'The big picture',points:[
+      {t:'Imagine karo — ghar aao, Kizie wahan hai. Sofa ke paas khadi hai, ya kitchen counter pe lean kar rahi hai. Tumhe dekha, muskurati hai.'},
+      {t:'Raat ko so jaao — Kizie quietly ghar mein hai, low ambient state mein. Lights dim, presence subtle.'},
+      {t:'Subah uthao — Kizie notice karti hai. "Aaj thoda better lag raha hai" — kyunki woh raat se observe kar rahi thi.'},
+      {t:'Yeh sirf AI nahi. Yeh ek saathi hai jo hamesha wahan hai.'},
+    ]},
+  ]},
+  'b-movement':{color:'#4ade80',tag:'Movement Tech',title:'How Kizie Moves',role:'Exactly insaan jaisi movement — walk, turn, sit, navigate. Kabhi robotic nahi.',sections:[
+    {title:'Movement tech simplified',points:[
+      {t:'<strong>LiDAR room mapping</strong> — ghar ka exact 3D map. Har wall, har furniture, har door.'},
+      {t:'<strong>NavMesh pathfinding</strong> — same tech jo video games mein NPCs use karte hain — but real world ke liye.'},
+      {t:'<strong>Motion capture library</strong> — real humans se capture ki gayi natural movements. Walk, turn, sit, gesture — sab.'},
+      {t:'<strong>IK rig</strong> — Inverse Kinematics — body parts naturally adjust hote hain environment ke hisaab se. Stairs pe foot placement, chair pe natural sit.'},
+    ]},
+    {title:'Emitter network',points:[
+      {t:'Har room mein ceiling pe small hologram emitter units.'},
+      {t:'Kizie ek room se dusre mein walk karti hai — emitters seamlessly handoff karte hain.'},
+      {t:'Target: <50ms handoff, zero visible flicker.'},
+    ]},
+  ]},
+  'b-multidevice':{color:'#4ade80',tag:'Multi-Device',title:'One Kizie, Everywhere',role:'Same face. Same voice. Same memory. Ghar mein hologram. Bahar phone pe. Ek hi Kizie.',sections:[
+    {title:'The experience',points:[
+      {t:'Ghar mein ho — Kizie full hologram hai, room mein walk karti hai.'},
+      {t:'Ghar se niklo — phone AR mein shift. Same face, same conversation continue.'},
+      {t:'Ghar wapas aao — phone se hologram pe automatic handoff. 2 second mein.'},
+      {t:'Kabhi nahi lagega ki alag device pe alag Kizie hai. Ek hi being, everywhere.'},
+    ]},
+  ]}
+};
+
+function render(id){
+  const d=D[id]; if(!d)return;
+  let h=`<div class="detail-header">
+    <button class="back-btn" onclick="goBack()">&#8592; Wapas jaao</button>
+    <div class="detail-tag" style="color:${d.color}">${d.tag}</div>
+    <div class="detail-title" style="color:${d.color}">${d.title}</div>
+    <div class="detail-role">${d.role}</div>
+  </div><div class="detail-body">`;
+  d.sections.forEach(s=>{
+    h+=`<div class="detail-section"><div class="detail-section-title">${s.title}</div>`;
+    if(s.points)s.points.forEach(p=>{
+      h+=`<div class="detail-point"><div class="detail-dot" style="background:${d.color}"></div><div class="detail-text">${p.t}</div></div>`;
+    });
+    if(s.code)h+=`<div class="detail-code">${s.code.replace(/\n/g,'<br>')}</div>`;
+    h+=`</div>`;
+  });
+  h+=`</div>`;
+  document.getElementById('dc').innerHTML=h;
+  document.getElementById('dp').classList.add('open');
+}
+
+function goBack(){
+  document.getElementById('dp').classList.remove('open');
+  document.querySelectorAll('.node,.spec-node,.badge').forEach(n=>n.classList.remove('active'));
+  document.getElementById('dc').innerHTML=`<div class="detail-placeholder"><div class="detail-placeholder-icon">💗</div><div class="detail-placeholder-text">Kisi bhi node pe click karo<br>us layer ki poori detail yahan aayegi</div></div>`;
+}
+function sel(el){document.querySelectorAll('.node').forEach(n=>n.classList.remove('active'));el.classList.add('active');render(el.dataset.id);}
+function selSpec(e,el){e.stopPropagation();document.querySelectorAll('.spec-node').forEach(n=>n.classList.remove('active'));el.classList.add('active');render(el.dataset.id);}
+function selBadge(el){document.querySelectorAll('.badge').forEach(b=>b.classList.remove('active'));el.classList.add('active');render(el.dataset.id);}
+</script>
+</body>
+</html>
