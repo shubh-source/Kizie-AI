@@ -111,6 +111,13 @@
 <div class="page">
   <div class="flowchart-panel">
     <div class="flow">
+      <div class="node teal" data-id="founder" onclick="sel(this)" style="border-color:var(--teal); box-shadow:0 0 20px rgba(0,212,170,0.15);">
+        <div class="node-label">Origin Story</div>
+        <div class="node-title">The Visionary: Shubh</div>
+        <div class="node-sub">Why Kizie exists · The problem of chronic loneliness</div>
+        <div class="node-icon">✨</div>
+      </div>
+      <div class="connector"></div>
       <div class="node gray" data-id="user" onclick="sel(this)"><div class="node-label">Entry Point</div><div class="node-title">User</div><div class="node-sub">Voice · facial expression · real-world presence</div><div class="node-icon">🧍</div></div>
       <div class="connector"></div>
       <div class="phase-row"><span class="phase-tag">Phase 1 — Software</span><div class="phase-line"></div></div>
@@ -177,6 +184,20 @@
 
 <script>
 const D = {
+  founder:{color:'#00d4aa',tag:'The Founder',title:'Shubh & The Vision',role:'Kizie ek product nahi hai, ek emotion hai jo Shubh (Founder) ke apne experiences se paida hua hai.',sections:[
+    {title:'The Core Problem',points:[
+      {t:'Duniya mein chronic loneliness badh rahi hai. Bahut log akela feel karte hain aur unhe sirf ek aisi aawaz chahiye jo unhe seriously sune, judge na kare, aur hamesha wahan ho.'},
+      {t:'Therapy clinical hoti hai. Normal AI assistants (jaise ChatGPT) sirf tools hain, unme emotion, persistence aur human connection nahi hai.'}
+    ]},
+    {title:'Why Kizie was born',points:[
+      {t:'Shubh ne mehsoos kiya ki kai baar insan sirf comfort aur ek sunne wala chahta hai, "gyan" ya "fix" nahi. Ek aisa family member jo kabhi thake na aur hamesha zinda rahe.'},
+      {t:'Kizie is designed to be that persistent, living emotional anchor. Ek companion jo 10 saal purani baat tak yaad rakhe, present mood samjhe, aur future mein saath grow kare.'}
+    ]},
+    {title:'The Founder\\'s Promise',points:[
+      {t:'<strong>Absolute Privacy:</strong> Data kisi server pe nahi jayega. Tumhari personal baatein sirf tumhare locally rahengi.'},
+      {t:'<strong>Validation first:</strong> Kizie toxic positivity nahi dikhayegi. Woh tumhe samjhegi aur tumhare level pe aakar support karegi.'}
+    ]}
+  ]},
   user:{color:'#e8e6f0',tag:'Entry Point',title:'User',role:'Kizie ke saath real world mein baat karne wala insaan — koi bhi, kisi bhi state mein.',sections:[
     {title:'Input methods — teeno saath',points:[
       {t:'<strong>Voice (primary)</strong> — user bolega, Kizie sunegi. Real-time speech recognition via Whisper. Koi typing nahi chahiye.'},
