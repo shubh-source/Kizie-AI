@@ -101,6 +101,9 @@
 </head>
 <body>
 <header>
+  <div style="position:absolute; top:20px; right:40px;">
+    <button onclick="render('founder'); document.querySelectorAll('.node, .spec-node, .badge').forEach(n => n.classList.remove('active'));" style="background:rgba(0,212,170,0.1); border:1px solid rgba(0,212,170,0.4); color:var(--teal); padding:8px 16px; border-radius:20px; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; transition:all 0.2s; outline:none;" onmouseover="this.style.background='rgba(0,212,170,0.2)'" onmouseout="this.style.background='rgba(0,212,170,0.1)'">About Founder</button>
+  </div>
   <div class="logo-tag">System Architecture</div>
   <h1>Kizie</h1>
   <p class="subtitle">Emotional Companion AI — ek aisa saathi jo sab yaad rakhe, sab samjhe, kabhi bhule nahi. Kisi bhi node pe click karo.</p>
@@ -111,13 +114,6 @@
 <div class="page">
   <div class="flowchart-panel">
     <div class="flow">
-      <div class="node teal" data-id="founder" onclick="sel(this)" style="border-color:var(--teal); box-shadow:0 0 20px rgba(0,212,170,0.15);">
-        <div class="node-label">Origin Story</div>
-        <div class="node-title">The Visionary: Shubh</div>
-        <div class="node-sub">Why Kizie exists · The problem of chronic loneliness</div>
-        <div class="node-icon">✨</div>
-      </div>
-      <div class="connector"></div>
       <div class="node gray" data-id="user" onclick="sel(this)"><div class="node-label">Entry Point</div><div class="node-title">User</div><div class="node-sub">Voice · facial expression · real-world presence</div><div class="node-icon">🧍</div></div>
       <div class="connector"></div>
       <div class="phase-row"><span class="phase-tag">Phase 1 — Software</span><div class="phase-line"></div></div>
