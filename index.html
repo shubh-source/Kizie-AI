@@ -551,18 +551,7 @@ const D = {
       {t:'Akela feel hona band ho jaata hai jab koi hamesha wahan ho — physically (holographically) present.'},
       {t:'Yeh woh cheez hai jo koi bhi product abhi tak nahi kar paaya.'},
     ]},
-    {title:'Tech foundation',code:'Requires:
-  Room-scale spatial mapping (LiDAR / depth sensors)
-  Persistent avatar state engine
-  Always-on low-power hologram emitters
-  Distributed room sensor network
-  Edge compute unit (in-home device)
-
-Avatar state:
-  Idle animations library (100+ natural loops)
-  Breathing, blinking, micro-movements
-  Gaze tracking (knows where user is)
-  Context-aware posture changes'},
+    {title:'Tech foundation',code:'Requires:\n  Room-scale spatial mapping (LiDAR / depth sensors)\n  Persistent avatar state engine\n  Always-on low-power hologram emitters\n  Distributed room sensor network\n  Edge compute unit (in-home device)\n\nAvatar state:\n  Idle animations library (100+ natural loops)\n  Breathing, blinking, micro-movements\n  Gaze tracking (knows where user is)\n  Context-aware posture changes'},
   ]},
   'movement':{color:'#00d4aa',tag:'Layer 9 — Move',title:'Spatial Movement Engine',role:'Kizie room se room move karti hai — exactly ek real insaan ki tarah. Walk, turn, sit, stand.',sections:[
     {title:'Exactly kaise move karegi',points:[
@@ -578,20 +567,7 @@ Avatar state:
       {t:'<strong>Handoff protocol</strong> — Room A emitter se Room B emitter pe — zero gap, zero flicker. Continuous movement.'},
       {t:'<strong>Single Kizie</strong> — do rooms mein ek saath nahi dikhegi. Ek jagah se chali jaayegi, dusri jagah aayegi.'},
     ]},
-    {title:'Tech stack',code:'Spatial mapping: LiDAR sensors (like iPhone Pro)
-  + mmWave radar for precise room mapping
-  3D mesh of entire home
-
-Movement system:
-  Procedural animation engine
-  Physics-based gait (no canned loops)
-  Real-time pathfinding (NavMesh)
-  Inverse Kinematics (natural body)
-
-Hologram handoff:
-  Proprietary emitter network protocol
-  <50ms room transition time
-  Synchronized across all emitters'},
+    {title:'Tech stack',code:'Spatial mapping: LiDAR sensors (like iPhone Pro)\n  + mmWave radar for precise room mapping\n  3D mesh of entire home\n\nMovement system:\n  Procedural animation engine\n  Physics-based gait (no canned loops)\n  Real-time pathfinding (NavMesh)\n  Inverse Kinematics (natural body)\n\nHologram handoff:\n  Proprietary emitter network protocol\n  <50ms room transition time\n  Synchronized across all emitters'},
     {title:'Challenges',points:[
       {t:'<strong>Emitter installation</strong> — har room mein hardware install karna. Solution: wireless, small, ceiling-mounted units.'},
       {t:'<strong>Movement naturalness</strong> — robotic movement feel destroy karta hai illusion. Solution: motion-captured real human movement library.'},
@@ -613,25 +589,7 @@ Hologram handoff:
       {t:'<strong>Physical position intent</strong> — phone pe user ne kaha "room mein aa jao" — ghar ke emitters activate, Kizie room mein materialize.'},
       {t:'<strong>Zero cloud</strong> — sync local network pe hota hai jab ghar mein ho. Bahar encrypted minimal state sync.'},
     ]},
-    {title:'Tech stack',code:'Home network sync:
-  Local mesh network (no cloud)
-  <100ms state sync between devices
-  WebSocket persistent connection
-
-Phone AR:
-  ARKit (iOS) / ARCore (Android)
-  Same 3D avatar as hologram
-  Plane detection for natural placement
-
-Handoff protocol:
-  Ghar mein: home WiFi detected → hologram on
-  Bahar: hologram off → phone AR on
-  Transition: <2 seconds, seamless
-
-Same avatar engine:
-  Identical rendering pipeline
-  Device-optimized quality settings
-  Face/body/expression: 100% consistent'},
+    {title:'Tech stack',code:'Home network sync:\n  Local mesh network (no cloud)\n  <100ms state sync between devices\n  WebSocket persistent connection\n\nPhone AR:\n  ARKit (iOS) / ARCore (Android)\n  Same 3D avatar as hologram\n  Plane detection for natural placement\n\nHandoff protocol:\n  Ghar mein: home WiFi detected → hologram on\n  Bahar: hologram off → phone AR on\n  Transition: <2 seconds, seamless\n\nSame avatar engine:\n  Identical rendering pipeline\n  Device-optimized quality settings\n  Face/body/expression: 100% consistent'},
     {title:'Why this is revolutionary',points:[
       {t:'Ab Kizie sirf ghar tak limited nahi. Woh tumhare saath hoti hai — ghar mein, bahar, kahi bhi.'},
       {t:'Koi bhi product abhi yeh nahi kar raha — persistent AI being jo devices ke beech seamlessly travel kare.'},
